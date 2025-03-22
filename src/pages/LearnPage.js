@@ -1174,6 +1174,20 @@ const LearnPage = () => {
     },
     {
       id: 2,
+      title: "Mutual Funds & SIP",
+      description: "Understanding mutual funds and systematic investment",
+      duration: "2 hours",
+      color: "bg-yellow-100",
+      chapters: [
+        "Introduction to Mutual Funds",
+        "Types of Mutual Funds",
+        "Understanding SIP",
+        "Fund Selection & Analysis",
+        "Taxation & Regulations"
+      ]
+    },
+    {
+      id: 3,
       title: "Technical Analysis",
       description: "Master the art of technical analysis",
       duration: "3 hours",
@@ -1187,7 +1201,7 @@ const LearnPage = () => {
       ]
     },
     {
-      id: 3,
+      id: 4,
       title: "Fundamental Analysis",
       description: "Learn to analyze stocks fundamentally",
       duration: "3 hours",
@@ -1198,20 +1212,6 @@ const LearnPage = () => {
         "Financial Ratios",
         "Equity Research",
         "Company Analysis"
-      ]
-    },
-    {
-      id: 4,
-      title: "Mutual Funds & SIP",
-      description: "Understanding mutual funds and systematic investment",
-      duration: "2 hours",
-      color: "bg-yellow-100",
-      chapters: [
-        "Introduction to Mutual Funds",
-        "Types of Mutual Funds",
-        "Understanding SIP",
-        "Fund Selection & Analysis",
-        "Taxation & Regulations"
       ]
     },
     {

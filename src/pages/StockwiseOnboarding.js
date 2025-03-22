@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw } from 'lucide-react';
+import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ const StockwiseOnboarding = () => {
   const [hoverState, setHoverState] = useState(null);
   const [investmentAmount, setInvestmentAmount] = useState(200);
   const [years, setYears] = useState(10);
-  const [interestRate, setInterestRate] = useState(12);
+  const [interestRate, setInterestRate] = useState(20);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState('next');
   
@@ -167,6 +167,30 @@ const StockwiseOnboarding = () => {
     );
   };
 
+  // Back Button Component
+  const BackButton = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="fixed top-4 left-4 flex items-center space-x-2 text-gray-800 hover:text-orange-600 transition-colors z-50 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border-2 border-gray-200"
+    >
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-6 w-6" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+      >
+        <path 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth={2} 
+          d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+        />
+      </svg>
+      <span className="font-medium">Back</span>
+    </button>
+  );
+
   // Custom car icons
   const ToyotaFortunerIcon = ({ className = "" }) => (
     <svg 
@@ -233,8 +257,7 @@ const StockwiseOnboarding = () => {
               }`}
             >
               <ToyotaFortunerIcon className={`w-48 h-48 ${hoverState === 'car' ? 'text-orange-600 transform scale-110 transition-all duration-300' : 'text-gray-800 transition-all duration-300'}`} />
-              <span className="mt-6 text-2xl font-bold">Toyota Fortuner</span>
-              <span className="mt-2 text-gray-600">₹35,00,000</span>
+              <span className="mt-6 text-2xl font-bold">Dream Car</span>
               {hoverState === 'car' && (
                 <span className="absolute top-4 right-4 bg-orange-600 text-white text-xs font-bold py-1 px-2 rounded">
                   TOP PICK
@@ -265,7 +288,7 @@ const StockwiseOnboarding = () => {
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto py-8">
-          <h2 className="text-4xl font-bold mb-10 text-center">Toyota Fortuner Details 🚙</h2>
+          <h2 className="text-4xl font-bold mb-10 text-center">Your Dream Car Details 🚙</h2>
           
           <div className="grid gap-8 mb-12">
             {/* Car Details Card */}
@@ -274,24 +297,21 @@ const StockwiseOnboarding = () => {
                 <div className="flex flex-col md:flex-row items-center gap-8">
                   <ToyotaFortunerIcon className="w-48 h-48 text-gray-800" />
                   <div className="flex-1">
-                    <h3 className="text-3xl font-bold mb-2">Toyota Fortuner</h3>
+                    <h3 className="text-3xl font-bold mb-2">Dream Car</h3>
                     <div className="space-y-2 text-gray-600">
-                      <p>• 2.8L Diesel Engine</p>
-                      <p>• 7-Seater Luxury SUV</p>
-                      <p>• 4x4 Available</p>
-                    </div>
-                    <div className="mt-4 inline-block bg-orange-600 text-white px-4 py-2 rounded-lg font-bold">
-                      On-Road Price: ₹35,00,000
+                      <p>• Powerful Engine</p>
+                      <p>• Luxury Features</p>
+                      <p>• Premium Experience</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Down Payment Section */}
+            {/* Price Selection Section */}
             <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-bold">Your Down Payment</span>
+                <span className="text-2xl font-bold">Set Your Dream Car Price</span>
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-600">Target:</span>
                   <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
@@ -304,25 +324,25 @@ const StockwiseOnboarding = () => {
                 <div className="relative">
                   <input
                     type="range"
-                    min={1000000}
-                    max={3500000}
+                    min={500000}
+                    max={25000000}
                     step={100000}
                     value={amount}
                     onChange={(e) => setAmount(parseInt(e.target.value))}
                     className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
                               focus:outline-none focus:ring-2 focus:ring-orange-600"
                     style={{
-                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB 100%)`,
+                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - 500000) / 24500000) * 100}%, #E5E7EB ${((amount - 500000) / 24500000) * 100}%, #E5E7EB 100%)`,
                     }}
                   />
                   <div className="flex justify-between mt-4 text-sm font-medium">
                     <div className="text-center">
-                      <div className="text-gray-500">Min Down Payment</div>
-                      <div className="text-lg font-bold">₹10L</div>
+                      <div className="text-gray-500">Min Price</div>
+                      <div className="text-lg font-bold">₹5L</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-500">Full Amount</div>
-                      <div className="text-lg font-bold">₹35L</div>
+                      <div className="text-gray-500">Max Price</div>
+                      <div className="text-lg font-bold">₹2.5Cr</div>
                     </div>
                   </div>
                 </div>
@@ -330,16 +350,8 @@ const StockwiseOnboarding = () => {
                 <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-gray-600">Car Price</div>
-                      <div className="text-lg font-bold">₹35,00,000</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Your Down Payment</div>
+                      <div className="text-sm text-gray-600">Your Dream Car Price</div>
                       <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Loan Amount</div>
-                      <div className="text-lg font-bold text-gray-700">₹{((3500000 - amount)/100000).toFixed(1)}L</div>
                     </div>
                   </div>
                 </div>
@@ -352,7 +364,7 @@ const StockwiseOnboarding = () => {
               Let's check my spending! <ChevronRight className="ml-2" />
             </NeopopButton>
             <p className="text-gray-600 text-center">
-              We'll help you save for the down payment through smart investments
+              We'll help you save for your dream car through smart investments
             </p>
           </div>
         </div>
@@ -552,7 +564,7 @@ const StockwiseOnboarding = () => {
       <div className="container mx-auto px-4">
         <div className="py-8">
           <div className="flex justify-between items-center mb-10">
-            <h2 className="text-4xl font-bold">Your Path to the Toyota Fortuner 🚙</h2>
+            <h2 className="text-4xl font-bold">Your Path to the Dream Car 🎯</h2>
             <NeopopButton 
               onClick={() => navigate('/learn')} 
               primary
@@ -617,20 +629,30 @@ const StockwiseOnboarding = () => {
                 <p className="text-sm text-gray-500 mt-4">Time to reach your goal</p>
               </div>
             </div>
-            
+
             <div className="p-6 border-4 border-gray-800 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="text-center">
                 <p className="text-lg font-medium mb-4">Expected Returns</p>
                 <div className="flex items-center justify-center space-x-4">
                   <button 
-                    onClick={() => setInterestRate(Math.max(8, interestRate - 1))}
+                    onClick={() => {
+                      const newRate = Math.max(0, interestRate - 20);
+                      setInterestRate(newRate);
+                      const newData = calculateGrowth(investmentAmount * 30, years, newRate);
+                      setGrowthData(newData);
+                    }}
                     className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold hover:bg-gray-300 transition-colors"
                   >
                     -
                   </button>
                   <span className="text-3xl font-bold min-w-[100px]">{interestRate}%</span>
                   <button 
-                    onClick={() => setInterestRate(Math.min(15, interestRate + 1))}
+                    onClick={() => {
+                      const newRate = Math.min(100, interestRate + 20);
+                      setInterestRate(newRate);
+                      const newData = calculateGrowth(investmentAmount * 30, years, newRate);
+                      setGrowthData(newData);
+                    }}
                     className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold hover:bg-gray-300 transition-colors"
                   >
                     +
@@ -651,7 +673,7 @@ const StockwiseOnboarding = () => {
                 Time to Goal: <span className="font-bold text-orange-600">{years} years</span>
               </div>
             </div>
-            
+
             <div className="h-80 mb-6">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
@@ -721,7 +743,7 @@ const StockwiseOnboarding = () => {
 
             <div className="bg-gray-800 text-white p-4 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg">Progress towards Down Payment</span>
+                <span className="text-lg">Progress towards Goal</span>
                 <span className="text-xl font-bold">{Math.min(100, Math.round((growthData[growthData.length-1].total/amount) * 100))}%</span>
               </div>
               <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
@@ -732,12 +754,12 @@ const StockwiseOnboarding = () => {
               </div>
             </div>
           </div>
-
+          
           {/* Learning CTA Section */}
-          {/* <div className="border-4 border-gray-800 rounded-xl bg-gradient-to-br from-orange-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+          <div className="border-4 border-gray-800 rounded-xl bg-gradient-to-br from-orange-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
             <h3 className="text-4xl font-bold mb-4">Ready to make this a reality? 🎯</h3>
             <p className="text-xl text-gray-600 mb-8">
-              Your daily savings could grow into your dream car's down payment. Let's learn how to make it happen!
+              Your daily savings could grow into your dream car. Let's learn how to make it happen!
             </p>
             <div className="flex flex-col items-center space-y-4">
               <NeopopButton 
@@ -751,14 +773,15 @@ const StockwiseOnboarding = () => {
                 Free learning modules • No credit card required
               </p>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
+      {currentScreen > 0 && <BackButton onClick={prevScreen} />}
       <div className="h-screen flex">
         {/* Progress Steps - Moved to left side */}
         <div className="fixed left-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4">
