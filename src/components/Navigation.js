@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, BookOpen, Trophy, Settings, LogOut } from 'lucide-react';
+import { Home, BookOpen, Trophy, Settings, LogOut, ShoppingBag } from 'lucide-react';
 
 const Navigation = () => {
   const { user, logout } = useAuth();
@@ -45,6 +45,13 @@ const Navigation = () => {
               >
                 <Trophy className="h-5 w-5 mr-1" />
                 Achievements
+              </Link>
+              <Link
+                to="/store"
+                className="inline-flex items-center px-1 pt-1 text-gray-500 hover:text-indigo-600"
+              >
+                <ShoppingBag className="h-5 w-5 mr-1" />
+                Store
               </Link>
             </div>
           </div>

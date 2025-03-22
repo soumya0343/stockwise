@@ -63,7 +63,13 @@ const StockwiseOnboarding = () => {
   };
 
   // Calculate growth data based on current parameters
-  const growthData = calculateGrowth(investmentAmount * 30, years, interestRate);
+  const [growthData, setGrowthData] = useState(calculateGrowth(investmentAmount * 30, years, interestRate));
+
+  // Update growth data when parameters change
+  useEffect(() => {
+    const newData = calculateGrowth(investmentAmount * 30, years, interestRate);
+    setGrowthData(newData);
+  }, [investmentAmount, years, interestRate]);
 
   // Helper function to format currency values
   const formatCurrency = (value) => {
@@ -104,9 +110,9 @@ const StockwiseOnboarding = () => {
       // Quick initial transition to skeletons
       const timer1 = setTimeout(() => setAnalyzeStep(1), 660);
       // Show transactions being processed
-      const timer2 = setTimeout(() => setAnalyzeStep(2), 2520);
+      const timer2 = setTimeout(() => setAnalyzeStep(2), 7520);
       // Final insight generation
-      const timer3 = setTimeout(() => setAnalyzeStep(3), 4560);
+      const timer3 = setTimeout(() => setAnalyzeStep(3), 11560);
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
@@ -585,14 +591,24 @@ const StockwiseOnboarding = () => {
                 <p className="text-lg font-medium mb-4">Investment Period</p>
                 <div className="flex items-center justify-center space-x-4">
                   <button 
-                    onClick={() => setYears(Math.max(1, years - 1))}
+                    onClick={() => {
+                      const newYears = Math.max(1, years - 1);
+                      setYears(newYears);
+                      const newData = calculateGrowth(investmentAmount * 30, newYears, interestRate);
+                      setGrowthData(newData);
+                    }}
                     className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold hover:bg-gray-300 transition-colors"
                   >
                     -
                   </button>
                   <span className="text-3xl font-bold min-w-[100px]">{years} yrs</span>
                   <button 
-                    onClick={() => setYears(Math.min(10, years + 1))}
+                    onClick={() => {
+                      const newYears = Math.min(30, years + 1);
+                      setYears(newYears);
+                      const newData = calculateGrowth(investmentAmount * 30, newYears, interestRate);
+                      setGrowthData(newData);
+                    }}
                     className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold hover:bg-gray-300 transition-colors"
                   >
                     +
