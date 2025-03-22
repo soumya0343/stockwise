@@ -127,7 +127,7 @@ const StockwiseOnboarding = () => {
     };
     
     const baseClasses = `relative overflow-hidden transition-all duration-200 font-bold rounded-lg flex items-center justify-center ${sizeClasses[size]}`;
-    const primaryClasses = primary ? "bg-purple-600 text-white" : "bg-black text-white";
+    const primaryClasses = primary ? "bg-orange-600 text-white" : "bg-black text-white";
     
     const buttonStyle = {
       transform: isPressed 
@@ -193,7 +193,7 @@ const StockwiseOnboarding = () => {
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto text-center py-8">
-          <h1 className="text-7xl font-bold mb-10">stock<span className="text-purple-600">wise</span></h1>
+          <h1 className="text-7xl font-bold mb-10">stock<span className="text-orange-600">wise</span></h1>
           <p className="text-2xl mb-16 leading-relaxed">Ready to turn ₹100 into your dream car?<br/>Let's make it happen together!</p>
           
           <div className="mb-10 w-64 mx-auto">
@@ -222,15 +222,15 @@ const StockwiseOnboarding = () => {
               onClick={() => { nextScreen(); }} 
               onMouseEnter={() => setHoverState('car')}
               onMouseLeave={() => setHoverState(null)}
-              className={`relative flex flex-col items-center justify-center p-8 rounded-xl border-4 border-black bg-white cursor-pointer transition-all duration-300 ${
-                hoverState === 'car' ? 'transform -translate-y-2 translate-x-2 shadow-[8px_8px_0px_rgba(0,0,0,0.8)]' : 'shadow-[4px_4px_0px_rgba(0,0,0,0.8)]'
+              className={`relative flex flex-col items-center justify-center p-8 rounded-xl border-4 border-gray-800 bg-white cursor-pointer transition-all duration-300 ${
+                hoverState === 'car' ? 'transform -translate-y-2 translate-x-2 shadow-[8px_8px_0px_rgba(31,41,55,0.8)]' : 'shadow-[4px_4px_0px_rgba(31,41,55,0.8)]'
               }`}
             >
-              <ToyotaFortunerIcon className={`w-48 h-48 ${hoverState === 'car' ? 'text-purple-600 transform scale-110 transition-all duration-300' : 'text-black transition-all duration-300'}`} />
+              <ToyotaFortunerIcon className={`w-48 h-48 ${hoverState === 'car' ? 'text-orange-600 transform scale-110 transition-all duration-300' : 'text-gray-800 transition-all duration-300'}`} />
               <span className="mt-6 text-2xl font-bold">Toyota Fortuner</span>
               <span className="mt-2 text-gray-600">₹35,00,000</span>
               {hoverState === 'car' && (
-                <span className="absolute top-4 right-4 bg-purple-600 text-white text-xs font-bold py-1 px-2 rounded">
+                <span className="absolute top-4 right-4 bg-orange-600 text-white text-xs font-bold py-1 px-2 rounded">
                   TOP PICK
                 </span>
               )}
@@ -263,10 +263,10 @@ const StockwiseOnboarding = () => {
           
           <div className="grid gap-8 mb-12">
             {/* Car Details Card */}
-            <div className="relative border-4 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
-              <div className="w-full bg-gradient-to-br from-purple-100 to-purple-50 p-8">
+            <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+              <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
                 <div className="flex flex-col md:flex-row items-center gap-8">
-                  <ToyotaFortunerIcon className="w-48 h-48 text-black" />
+                  <ToyotaFortunerIcon className="w-48 h-48 text-gray-800" />
                   <div className="flex-1">
                     <h3 className="text-3xl font-bold mb-2">Toyota Fortuner</h3>
                     <div className="space-y-2 text-gray-600">
@@ -274,7 +274,7 @@ const StockwiseOnboarding = () => {
                       <p>• 7-Seater Luxury SUV</p>
                       <p>• 4x4 Available</p>
                     </div>
-                    <div className="mt-4 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-bold">
+                    <div className="mt-4 inline-block bg-orange-600 text-white px-4 py-2 rounded-lg font-bold">
                       On-Road Price: ₹35,00,000
                     </div>
                   </div>
@@ -283,12 +283,12 @@ const StockwiseOnboarding = () => {
             </div>
             
             {/* Down Payment Section */}
-            <div className="bg-white p-6 rounded-xl border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+            <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-2xl font-bold">Your Down Payment</span>
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-600">Target:</span>
-                  <span className="text-2xl font-mono bg-purple-100 px-4 py-2 rounded-lg border-2 border-purple-200 font-bold text-purple-600">
+                  <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
                     {(amount/100000).toFixed(1)}L
                   </span>
                 </div>
@@ -304,9 +304,9 @@ const StockwiseOnboarding = () => {
                     value={amount}
                     onChange={(e) => setAmount(parseInt(e.target.value))}
                     className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
-                              focus:outline-none focus:ring-2 focus:ring-purple-600"
+                              focus:outline-none focus:ring-2 focus:ring-orange-600"
                     style={{
-                      backgroundImage: `linear-gradient(to right, #7C3AED 0%, #7C3AED ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB 100%)`,
+                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB ${((amount - 1000000) / 2500000) * 100}%, #E5E7EB 100%)`,
                     }}
                   />
                   <div className="flex justify-between mt-4 text-sm font-medium">
@@ -321,7 +321,7 @@ const StockwiseOnboarding = () => {
                   </div>
                 </div>
 
-                <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-gray-600">Car Price</div>
@@ -329,7 +329,7 @@ const StockwiseOnboarding = () => {
                     </div>
                     <div>
                       <div className="text-sm text-gray-600">Your Down Payment</div>
-                      <div className="text-lg font-bold text-purple-600">₹{(amount/100000).toFixed(1)}L</div>
+                      <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-600">Loan Amount</div>
@@ -358,7 +358,7 @@ const StockwiseOnboarding = () => {
       <div className="max-w-2xl mx-auto">
         <h2 className="text-4xl font-bold mb-10 text-center">Let's see where your money goes... 🕵️</h2>
         
-        <div className="relative border-4 border-black p-6 rounded-xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+        <div className="relative border-4 border-gray-800 p-6 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
           {analyzeStep < 3 ? (
             <div className="flex flex-col">
               {/* Initial loading state - skeletons immediately */}
@@ -399,12 +399,12 @@ const StockwiseOnboarding = () => {
                     <h3 className="text-xl font-bold">Your Recent Spending</h3>
                     <div className="flex items-center">
                       {analyzeStep === 1 ? (
-                        <div className="flex items-center text-purple-600">
+                        <div className="flex items-center text-orange-600">
                           <RefreshCw size={14} className="mr-2 animate-spin" />
                           <span className="text-sm">Finding patterns...</span>
                         </div>
                       ) : analyzeStep === 2 ? (
-                        <div className="flex items-center text-purple-600">
+                        <div className="flex items-center text-orange-600">
                           <RefreshCw size={14} className="mr-2" />
                           <span className="text-sm">Analyzing frequency...</span>
                         </div>
@@ -423,17 +423,17 @@ const StockwiseOnboarding = () => {
                         <div 
                           key={tx.id}
                           className={`py-3 px-2 border-b border-gray-200 flex justify-between transition-all duration-500 ${
-                            isHighlighted ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
+                            isHighlighted ? 'bg-orange-50 border-l-4 border-l-orange-500' : ''
                           } ${
                             isFaded ? 'opacity-30' : ''
                           }`}
                         >
                           <div className="flex items-center">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 transition-colors duration-500 ${
-                              isHighlighted ? 'bg-purple-100' : 'bg-gray-100'
+                              isHighlighted ? 'bg-orange-100' : 'bg-gray-100'
                             }`}>
                               {isHighlighted ? 
-                                <FoodIcon size={16} className="text-purple-600 transition-all duration-500" /> : 
+                                <FoodIcon size={16} className="text-orange-600 transition-all duration-500" /> : 
                                 <span className="text-xs text-gray-500">{tx.category.charAt(0)}</span>
                               }
                             </div>
@@ -441,7 +441,7 @@ const StockwiseOnboarding = () => {
                               <div className="font-medium text-sm">
                                 {tx.desc}
                                 {isHighlighted && analyzeStep >= 2 && (
-                                  <span className="ml-2 text-xs bg-purple-600 text-white px-2 py-0.5 rounded transition-opacity duration-500">
+                                  <span className="ml-2 text-xs bg-orange-600 text-white px-2 py-0.5 rounded transition-opacity duration-500">
                                     FREQUENT
                                   </span>
                                 )}
@@ -461,10 +461,10 @@ const StockwiseOnboarding = () => {
                   </div>
                   
                   {analyzeStep === 2 && (
-                    <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg transition-opacity duration-500">
+                    <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg transition-opacity duration-500">
                       <div className="flex items-center">
-                        <RefreshCw size={14} className="mr-2 text-purple-600 animate-spin" />
-                        <p className="text-sm text-purple-600 font-medium">Isolating Swiggy transactions and calculating totals...</p>
+                        <RefreshCw size={14} className="mr-2 text-orange-600 animate-spin" />
+                        <p className="text-sm text-orange-600 font-medium">Isolating Swiggy transactions and calculating totals...</p>
                       </div>
                     </div>
                   )}
@@ -476,20 +476,20 @@ const StockwiseOnboarding = () => {
                 <div className="transition-opacity duration-500 opacity-100">
                   <div className="flex justify-between items-center mb-5">
                     <h3 className="text-xl font-bold">I found something interesting! 💡</h3>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">INSIGHT</span>
+                    <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded-full">INSIGHT</span>
                   </div>
                   
-                  <div className="p-5 bg-purple-50 border-2 border-purple-200 rounded-lg mb-6">
+                  <div className="p-5 bg-orange-50 border-2 border-orange-200 rounded-lg mb-6">
                     <div className="flex items-start">
-                      <div className="flex items-center justify-center w-12 h-12 bg-purple-600 rounded-full mr-4 flex-shrink-0">
+                      <div className="flex items-center justify-center w-12 h-12 bg-orange-600 rounded-full mr-4 flex-shrink-0">
                         <FoodIcon size={20} className="text-white" />
                       </div>
                       <div>
                         <p className="text-2xl font-bold">You spend ₹200 daily on Swiggy!</p>
                         <p className="text-base text-gray-600 mb-3">That adds up to a whopping ₹73,000/year</p>
-                        <div className="bg-white rounded p-3 border border-purple-200">
+                        <div className="bg-white rounded p-3 border border-orange-200">
                           <p className="font-medium text-sm">What if you made one meal at home each day?</p>
-                          <p className="text-lg font-bold text-purple-600 mt-1">
+                          <p className="text-lg font-bold text-orange-600 mt-1">
                             You'd save ₹100/day (₹3,000/month)!
                           </p>
                         </div>
@@ -509,20 +509,20 @@ const StockwiseOnboarding = () => {
             <div>
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-xl font-bold">I found something interesting! 💡</h3>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">INSIGHT</span>
+                <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded-full">INSIGHT</span>
               </div>
               
-              <div className="p-5 bg-purple-50 border-2 border-purple-200 rounded-lg mb-6">
+              <div className="p-5 bg-orange-50 border-2 border-orange-200 rounded-lg mb-6">
                 <div className="flex items-start">
-                  <div className="flex items-center justify-center w-12 h-12 bg-purple-600 rounded-full mr-4 flex-shrink-0">
+                  <div className="flex items-center justify-center w-12 h-12 bg-orange-600 rounded-full mr-4 flex-shrink-0">
                     <FoodIcon size={20} className="text-white" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">You spend ₹200 daily on Swiggy!</p>
                     <p className="text-base text-gray-600 mb-3">That adds up to a whopping ₹73,000/year</p>
-                    <div className="bg-white rounded p-3 border border-purple-200">
+                    <div className="bg-white rounded p-3 border border-orange-200">
                       <p className="font-medium text-sm">What if you made one meal at home each day?</p>
-                      <p className="text-lg font-bold text-purple-600 mt-1">
+                      <p className="text-lg font-bold text-orange-600 mt-1">
                         You'd save ₹100/day (₹3,000/month)!
                       </p>
                     </div>
@@ -545,11 +545,20 @@ const StockwiseOnboarding = () => {
     <div className="min-h-[calc(100vh-2rem)]">
       <div className="container mx-auto px-4">
         <div className="py-8">
-          <h2 className="text-4xl font-bold mb-10 text-center">Your Path to the Toyota Fortuner 🚙</h2>
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-4xl font-bold">Your Path to the Toyota Fortuner 🚙</h2>
+            <NeopopButton 
+              onClick={() => navigate('/learn')} 
+              primary
+              className="py-4 px-6 text-lg"
+            >
+              Start Investing <ArrowRight className="ml-2 w-5 h-5" />
+            </NeopopButton>
+          </div>
           
           {/* Interactive Controls */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="p-6 border-4 border-black rounded-xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+            <div className="p-6 border-4 border-gray-800 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="text-center">
                 <p className="text-lg font-medium mb-4">Daily Savings</p>
                 <div className="flex items-center justify-center space-x-4">
@@ -571,7 +580,7 @@ const StockwiseOnboarding = () => {
               </div>
             </div>
             
-            <div className="p-6 border-4 border-black rounded-xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+            <div className="p-6 border-4 border-gray-800 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="text-center">
                 <p className="text-lg font-medium mb-4">Investment Period</p>
                 <div className="flex items-center justify-center space-x-4">
@@ -593,7 +602,7 @@ const StockwiseOnboarding = () => {
               </div>
             </div>
             
-            <div className="p-6 border-4 border-black rounded-xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+            <div className="p-6 border-4 border-gray-800 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="text-center">
                 <p className="text-lg font-medium mb-4">Expected Returns</p>
                 <div className="flex items-center justify-center space-x-4">
@@ -615,15 +624,15 @@ const StockwiseOnboarding = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Graph and Stats */}
-          <div className="border-4 border-black rounded-xl bg-white p-6 mb-8 shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+          <div className="border-4 border-gray-800 rounded-xl bg-white p-6 mb-8 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
             <div className="flex justify-between items-center mb-6">
               <div className="text-lg font-medium">
-                Target Amount: <span className="font-bold text-purple-600">{formatCurrency(amount)}</span>
+                Target Amount: <span className="font-bold text-orange-600">{formatCurrency(amount)}</span>
               </div>
               <div className="text-lg font-medium">
-                Time to Goal: <span className="font-bold text-purple-600">{years} years</span>
+                Time to Goal: <span className="font-bold text-orange-600">{years} years</span>
               </div>
             </div>
             
@@ -651,9 +660,9 @@ const StockwiseOnboarding = () => {
                   <Line 
                     type="monotone" 
                     dataKey="total" 
-                    stroke="#7C3AED" 
+                    stroke="#F97316" 
                     strokeWidth={3} 
-                    dot={{ stroke: '#7C3AED', strokeWidth: 2, r: 4 }}
+                    dot={{ stroke: '#F97316', strokeWidth: 2, r: 4 }}
                     activeDot={{ r: 6 }}
                     name="Total Value"
                   />
@@ -669,10 +678,10 @@ const StockwiseOnboarding = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="flex items-center p-4 bg-purple-50 rounded-lg">
-                <div className="w-4 h-4 rounded-full bg-purple-600 mr-3"></div>
+              <div className="flex items-center p-4 bg-orange-50 rounded-lg">
+                <div className="w-4 h-4 rounded-full bg-orange-600 mr-3"></div>
                 <div>
                   <p className="text-sm text-gray-600">Total Value</p>
                   <p className="text-lg font-bold">{formatCurrency(growthData[growthData.length-1].total)}</p>
@@ -693,23 +702,23 @@ const StockwiseOnboarding = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-black text-white p-4 rounded-lg">
+
+            <div className="bg-gray-800 text-white p-4 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-lg">Progress towards Down Payment</span>
                 <span className="text-xl font-bold">{Math.min(100, Math.round((growthData[growthData.length-1].total/amount) * 100))}%</span>
               </div>
               <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-purple-600 rounded-full transition-all duration-500"
+                  className="h-full bg-orange-600 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, (growthData[growthData.length-1].total/amount) * 100)}%` }}
                 ></div>
               </div>
             </div>
           </div>
-          
+
           {/* Learning CTA Section */}
-          <div className="border-4 border-black rounded-xl bg-gradient-to-br from-purple-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.8)]">
+          {/* <div className="border-4 border-gray-800 rounded-xl bg-gradient-to-br from-orange-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
             <h3 className="text-4xl font-bold mb-4">Ready to make this a reality? 🎯</h3>
             <p className="text-xl text-gray-600 mb-8">
               Your daily savings could grow into your dream car's down payment. Let's learn how to make it happen!
@@ -726,44 +735,38 @@ const StockwiseOnboarding = () => {
                 Free learning modules • No credit card required
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
   ];
 
   return (
-    <div className="font-sans bg-gray-50">
-      {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
-        <div 
-          className="h-full bg-purple-600 transition-all duration-500 ease-out"
-          style={{ width: `${progressPercentage}%` }}
-        ></div>
-      </div>
-      
-      {/* Step indicator */}
-      <div className="fixed top-4 left-4 z-50">
-        <div className="flex items-center bg-white py-1 px-3 rounded-full border border-black shadow-[1px_1px_0px_rgba(0,0,0,0.8)]">
-          <span className="font-bold text-purple-600 text-sm">{currentScreen + 1}</span>
-          <span className="mx-1 text-xs">/</span>
-          <span className="font-bold text-sm">{totalScreens}</span>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
+      <div className="h-screen flex">
+        {/* Progress Steps - Moved to left side */}
+        <div className="fixed left-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4">
+          {screens.map((screen, index) => (
+            <div key={index} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentScreen === index ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                {index + 1}
+              </div>
+              {index < screens.length - 1 && (
+                <div className={`h-24 w-1 ml-4 ${
+                  currentScreen > index ? 'bg-orange-600' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
         </div>
-      </div>
-      
-      {/* Main content area with padding for fixed header */}
-      <div className="pt-8">
-        {/* Current screen with transition */}
-        <div 
-          className={`transition-all duration-360 transform ${
-            isTransitioning 
-              ? transitionDirection === 'next' 
-                ? 'opacity-0 translate-x-10' 
-                : 'opacity-0 -translate-x-10'
-              : 'opacity-100 translate-x-0'
-          }`}
-        >
-          {screens[currentScreen]}
+
+        {/* Step Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="h-full">
+            {screens[currentScreen]}
+          </div>
         </div>
       </div>
     </div>
@@ -812,11 +815,11 @@ style.textContent = `
     appearance: none;
     width: 20px;
     height: 20px;
-    border: 2px solid black;
+    border: 2px solid #1F2937;
     border-radius: 50%;
     background: white;
     cursor: pointer;
-    box-shadow: 0 0 0 3px #7C3AED;
+    box-shadow: 0 0 0 3px #F97316;
   }
   
   .screen-transition-enter {

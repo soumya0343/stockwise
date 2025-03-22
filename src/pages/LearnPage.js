@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
+import FinanceChatbot from '../components/FinanceChatbot';
 
 const LearnPage = () => {
   const [selectedModule, setSelectedModule] = useState(null);
@@ -354,12 +357,12 @@ const LearnPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
       {/* Title Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">stockwise varsity</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold mb-4 text-black">stockwise varsity</h1>
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
             Your comprehensive guide to financial markets. Learn at your own pace with our structured modules.
           </p>
         </div>
@@ -374,7 +377,7 @@ const LearnPage = () => {
               <p className="text-gray-400 mb-4">Complete modules to earn certificates</p>
               <div className="bg-gray-800 rounded-full h-4 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-purple-500 to-purple-300 h-full rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-orange-500 to-orange-300 h-full rounded-full transition-all duration-500"
                   style={{ width: `${(completedChapters.size / 15) * 100}%` }}
                 />
               </div>
@@ -407,7 +410,7 @@ const LearnPage = () => {
           {modules.map((module) => (
             <div
               key={module.id}
-              className="bg-white rounded-xl border-4 border-black p-6 cursor-pointer"
+              className="bg-white rounded-xl border-4 border-black p-6 cursor-pointer hover:shadow-lg transition-shadow duration-300"
               onClick={() => setSelectedModule(selectedModule === module.id ? null : module.id)}
             >
               {/* Module Header */}
@@ -416,8 +419,8 @@ const LearnPage = () => {
                   <span className="text-lg">📚</span>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">{module.title}</h3>
-                  <div className="flex items-center text-gray-500">
+                  <h3 className="text-xl font-bold mb-1 text-black">{module.title}</h3>
+                  <div className="flex items-center text-gray-600">
                     <span className="text-sm">⏱️ {module.duration}</span>
                   </div>
                 </div>
@@ -426,7 +429,7 @@ const LearnPage = () => {
               {/* Chapters */}
               <div className={`space-y-3 transition-all duration-300 ${selectedModule === module.id ? 'block' : 'hidden'}`}>
                 {module.chapters.map((chapter, index) => (
-                  <button 
+                  <button
                     key={index}
                     className={getChapterButtonClasses(module.id, chapter)}
                     onClick={(e) => {
@@ -437,7 +440,7 @@ const LearnPage = () => {
                     <span className="mr-2">
                       {isChapterCompleted(module.id, chapter) ? '✅' : '📖'}
                     </span>
-                    <span className={`${isChapterCompleted(module.id, chapter) ? 'text-green-700' : 'text-gray-600'}`}>
+                    <span className={`${isChapterCompleted(module.id, chapter) ? 'text-orange-700' : 'text-gray-700'}`}>
                       {chapter}
                     </span>
                   </button>
@@ -452,12 +455,12 @@ const LearnPage = () => {
         </div>
       </div>
 
-      {/* Updated Chapter Content Modal */}
+      {/* Chapter Content Modal */}
       {showChapterContent && selectedChapter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold">{selectedChapter}</h2>
+              <h2 className="text-3xl font-bold text-black">{selectedChapter}</h2>
               <button 
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => {
@@ -477,17 +480,17 @@ const LearnPage = () => {
                 {!showQuiz ? (
                   <>
                     {/* Introduction */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-orange-50 p-4 rounded-lg">
                       <p className="text-lg text-gray-700">{chapterContent[selectedChapter].introduction}</p>
                     </div>
 
                     {/* Sections */}
                     {chapterContent[selectedChapter].sections.map((section, index) => (
                       <div key={index} className="border-b pb-6">
-                        <h3 className="text-xl font-semibold mb-4">{section.title}</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-black">{section.title}</h3>
                         <p className="text-gray-700 mb-4">{section.content}</p>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-semibold mb-2">Key Points:</h4>
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h4 className="font-semibold mb-2 text-black">Key Points:</h4>
                           <ul className="list-disc pl-5 space-y-2">
                             {section.keyPoints.map((point, i) => (
                               <li key={i} className="text-gray-700">{point}</li>
@@ -500,7 +503,7 @@ const LearnPage = () => {
                     {/* Start Quiz Button */}
                     <div className="flex justify-center pt-4">
                       <button
-                        className="bg-purple-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-purple-700 transition-colors duration-200 flex items-center space-x-2"
+                        className="bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
                         onClick={() => setShowQuiz(true)}
                       >
                         <span>Start Knowledge Check</span>
@@ -511,11 +514,11 @@ const LearnPage = () => {
                 ) : (
                   <div className="space-y-8">
                     {/* Quiz Header */}
-                    <div className="bg-purple-50 p-6 rounded-lg">
+                    <div className="bg-orange-50 p-6 rounded-lg">
                       <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-semibold">Knowledge Check</h3>
+                        <h3 className="text-xl font-semibold text-black">Knowledge Check</h3>
                         <button
-                          className="text-purple-600 hover:text-purple-800 text-sm flex items-center space-x-2"
+                          className="text-orange-600 hover:text-orange-800 text-sm flex items-center space-x-2"
                           onClick={() => {
                             if (window.confirm('Going back will reset your quiz progress. Are you sure?')) {
                               setShowQuiz(false);
@@ -533,7 +536,7 @@ const LearnPage = () => {
                       {chapterContent[selectedChapter].quiz.map((quizItem, questionIndex) => (
                         <div key={questionIndex} className="space-y-4 mb-8">
                           <div className="flex justify-between items-center">
-                            <p className="font-medium">{quizItem.question}</p>
+                            <p className="font-medium text-black">{quizItem.question}</p>
                             {quizAttempts[questionIndex] > 0 && (
                               <span className="text-sm text-gray-500">
                                 Attempts: {quizAttempts[questionIndex]}
@@ -568,7 +571,7 @@ const LearnPage = () => {
                             ) : (
                               <div className="text-sm">
                                 {quizAnswers[questionIndex] === quizItem.correct ? (
-                                  <p className="text-green-600">✓ Correct! Well done!</p>
+                                  <p className="text-orange-600">✓ Correct! Well done!</p>
                                 ) : (
                                   <div>
                                     <p className="text-red-600 font-medium">✗ Incorrect.</p>
@@ -632,6 +635,9 @@ const LearnPage = () => {
           </div>
         </div>
       )}
+
+      {/* Finance Chatbot */}
+      <FinanceChatbot />
     </div>
   );
 };

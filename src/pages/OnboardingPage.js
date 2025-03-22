@@ -35,7 +35,7 @@ const StockwiseOnboarding = () => {
     // Screen 1: Welcome
     <div className="flex flex-col h-full justify-between">
       <div>
-        <h1 className="text-6xl font-bold mb-4">stock<span className="text-purple-500">wise</span></h1>
+        <h1 className="text-6xl font-bold mb-4">stock<span className="text-orange-500">wise</span></h1>
         <p className="text-2xl mt-8">Your first ₹100 today.<br/>Your first crore tomorrow.</p>
       </div>
       <button 
@@ -56,7 +56,7 @@ const StockwiseOnboarding = () => {
             setGoal('car');
             nextScreen();
           }} 
-          className={`flex flex-col items-center justify-center p-8 rounded-xl border-4 border-black bg-white cursor-pointer transform transition hover:translate-y-1 hover:shadow-neo ${goal === 'car' ? 'border-purple-500 shadow-neo-purple' : ''}`}
+          className={`flex flex-col items-center justify-center p-8 rounded-xl border-4 border-black bg-white cursor-pointer transform transition hover:translate-y-1 hover:shadow-neo ${goal === 'car' ? 'border-orange-500 shadow-neo-orange' : ''}`}
         >
           <Car size={64} />
           <span className="mt-4 text-xl font-bold">Sports Car</span>
@@ -120,7 +120,7 @@ const StockwiseOnboarding = () => {
           <div className="p-6 rounded-xl border-4 border-black bg-white mb-6">
             <h3 className="text-2xl font-bold mb-4">Found something interesting</h3>
             <div className="flex items-center">
-              <Coffee size={40} className="mr-4 text-purple-500" />
+              <Coffee size={40} className="mr-4 text-orange-500" />
               <div>
                 <p className="text-xl font-bold">₹20 daily on coffee</p>
                 <p className="text-gray-600">That's ₹7,300 per year</p>
@@ -144,12 +144,12 @@ const StockwiseOnboarding = () => {
       
       <div className="relative h-64 mb-8 rounded-xl border-4 border-black bg-white overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
-          <Car size={100} className={`text-gray-400 transition-all duration-1000 ${coffeeAnimation ? 'text-purple-500 transform scale-110' : ''}`} />
+          <Car size={100} className={`text-gray-400 transition-all duration-1000 ${coffeeAnimation ? 'text-orange-500 transform scale-110' : ''}`} />
         </div>
         
         <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-200">
           <div 
-            className={`h-full bg-purple-500 transition-all duration-1500 ease-out ${animateProgress ? 'w-7' : 'w-0'}`}
+            className={`h-full bg-orange-500 transition-all duration-1500 ease-out ${animateProgress ? 'w-7' : 'w-0'}`}
           ></div>
         </div>
       </div>
@@ -165,7 +165,7 @@ const StockwiseOnboarding = () => {
       
       <button 
         onClick={nextScreen} 
-        className="mt-6 w-full py-6 bg-purple-500 text-white text-xl font-bold rounded-xl flex items-center justify-center transform transition hover:translate-y-1 hover:shadow-neo-purple"
+        className="mt-6 w-full py-6 bg-orange-500 text-white text-xl font-bold rounded-xl flex items-center justify-center transform transition hover:translate-y-1 hover:shadow-neo-orange"
       >
         Start my journey <ArrowRight className="ml-2" />
       </button>
@@ -183,9 +183,9 @@ const StockwiseOnboarding = () => {
         <span className="text-3xl font-bold">₹100</span>
       </div>
       
-      <div className="p-6 rounded-xl border-4 border-purple-500 bg-white mb-6">
+      <div className="p-6 rounded-xl border-4 border-orange-500 bg-white mb-6">
         <p className="text-lg">
-          <span className="text-purple-500 font-bold">Pro tip:</span> Start with the coffee money from this week!
+          <span className="text-orange-500 font-bold">Pro tip:</span> Start with the coffee money from this week!
         </p>
       </div>
       
@@ -206,25 +206,60 @@ const StockwiseOnboarding = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div 
-        className="w-full max-w-md h-[700px] p-6 rounded-2xl overflow-hidden relative"
-        style={containerStyle}
-      >
-        <div className="relative h-full">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-black mb-4">Welcome to Stockwise</h1>
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+            Your journey to financial literacy starts here. Let's get you set up with your personalized learning path.
+          </p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="flex justify-between mb-12">
+          {screens.map((_, index) => (
+            <div key={index} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                index <= currentScreen ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                {index + 1}
+              </div>
+              {index < screens.length - 1 && (
+                <div className={`w-24 h-1 mx-4 ${
+                  index < currentScreen ? 'bg-orange-600' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Step Content */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-3xl mx-auto">
           {screens[currentScreen]}
         </div>
-        
-        {/* Screen indicator */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-          {screens.map((_, index) => (
-            <div 
-              key={index}
-              className={`w-2 h-2 rounded-full mx-1 ${
-                index === currentScreen ? 'bg-purple-500' : 'bg-gray-300'
-              }`}
-            ></div>
-          ))}
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-8">
+          {currentScreen > 0 && (
+            <button
+              onClick={() => setCurrentScreen(prev => prev - 1)}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center space-x-2"
+            >
+              <span>←</span>
+              <span>Back</span>
+            </button>
+          )}
+          <button
+            onClick={nextScreen}
+            className={`px-6 py-3 rounded-lg text-white ${
+              currentScreen < screens.length - 1
+                ? 'bg-orange-600 hover:bg-orange-700'
+                : 'bg-gray-300 cursor-not-allowed'
+            }`}
+            disabled={currentScreen === screens.length - 1}
+          >
+            {currentScreen === screens.length - 1 ? 'Get Started' : 'Next'}
+          </button>
         </div>
       </div>
     </div>
@@ -240,8 +275,8 @@ style.textContent = `
     box-shadow: 4px 4px 0px rgba(0,0,0,0.9);
   }
   
-  .shadow-neo-purple {
-    box-shadow: 4px 4px 0px rgba(124, 58, 237, 0.9);
+  .shadow-neo-orange {
+    box-shadow: 4px 4px 0px rgba(249, 115, 22, 0.9);
   }
 `;
 document.head.appendChild(style);
