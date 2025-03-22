@@ -17,6 +17,7 @@ const StockwiseOnboarding = () => {
   const [interestRate, setInterestRate] = useState(20);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState('next');
+  const [selectedGoal, setSelectedGoal] = useState('car');
   
   // Sample transaction data
   const transactions = [
@@ -248,32 +249,57 @@ const StockwiseOnboarding = () => {
           <h2 className="text-4xl font-bold mb-12 text-center">What are you dreaming of, friend?</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            {/* Dream Car Option */}
             <div 
-              onClick={() => { nextScreen(); }} 
+              className={`relative overflow-hidden rounded-2xl border-4 ${hoverState === 'car' ? 'border-orange-500' : 'border-black'} transition-all duration-300 cursor-pointer`}
               onMouseEnter={() => setHoverState('car')}
               onMouseLeave={() => setHoverState(null)}
-              className={`relative flex flex-col items-center justify-center p-8 rounded-xl border-4 border-gray-800 bg-white cursor-pointer transition-all duration-300 ${
-                hoverState === 'car' ? 'transform -translate-y-2 translate-x-2 shadow-[8px_8px_0px_rgba(31,41,55,0.8)]' : 'shadow-[4px_4px_0px_rgba(31,41,55,0.8)]'
-              }`}
+              onClick={() => {
+                setAmount(3500000);
+                setSelectedGoal('car');
+                nextScreen();
+              }}
             >
-              <ToyotaFortunerIcon className={`w-48 h-48 ${hoverState === 'car' ? 'text-orange-600 transform scale-110 transition-all duration-300' : 'text-gray-800 transition-all duration-300'}`} />
-              <span className="mt-6 text-2xl font-bold">Dream Car</span>
-              {hoverState === 'car' && (
-                <span className="absolute top-4 right-4 bg-orange-600 text-white text-xs font-bold py-1 px-2 rounded">
-                  TOP PICK
-                </span>
-              )}
+              <div className="bg-white p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <Car className="w-12 h-12" />
+                  <ArrowRight className={`w-6 h-6 transform transition-transform duration-300 ${hoverState === 'car' ? 'translate-x-2' : ''}`} />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Dream Car</h3>
+                <p className="text-gray-600">Start your journey towards owning your dream car through smart investments.</p>
+              </div>
             </div>
-            
+
+            {/* Dream Vacation Option */}
             <div 
-              className="relative flex flex-col items-center justify-center p-8 rounded-xl border-4 border-gray-300 bg-white cursor-not-allowed opacity-60 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+              className={`relative overflow-hidden rounded-2xl border-4 ${hoverState === 'vacation' ? 'border-orange-500' : 'border-black'} transition-all duration-300 cursor-pointer`}
+              onMouseEnter={() => setHoverState('vacation')}
+              onMouseLeave={() => setHoverState(null)}
+              onClick={() => {
+                setAmount(500000);
+                setSelectedGoal('vacation');
+                nextScreen();
+              }}
             >
-              <FerrariIcon className="w-48 h-48 text-gray-400" />
-              <span className="mt-6 text-2xl font-bold text-gray-400">Ferrari</span>
-              <span className="mt-2 text-gray-500">₹4,00,00,000</span>
-              <span className="absolute top-4 right-4 bg-gray-500 text-white text-xs font-bold py-1 px-2 rounded">
-                COMING SOON
-              </span>
+              <div className="bg-white p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <Calendar className="w-12 h-12" />
+                  <ArrowRight className={`w-6 h-6 transform transition-transform duration-300 ${hoverState === 'vacation' ? 'translate-x-2' : ''}`} />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Dream Vacation</h3>
+                <p className="text-gray-600">Plan your perfect getaway through strategic investment planning.</p>
+              </div>
+            </div>
+
+            {/* Coming Soon Option */}
+            <div className="relative overflow-hidden rounded-2xl border-4 border-gray-300 opacity-60 cursor-not-allowed">
+              <div className="bg-white p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <TrendingUp className="w-12 h-12" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Coming Soon</h3>
+                <p className="text-gray-600">More exciting investment goals are on the way!</p>
+              </div>
             </div>
           </div>
           
@@ -288,20 +314,36 @@ const StockwiseOnboarding = () => {
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto py-8">
-          <h2 className="text-4xl font-bold mb-10 text-center">Your Dream Car Details 🚙</h2>
+          <h2 className="text-4xl font-bold mb-10 text-center">
+            {selectedGoal === 'car' ? 'Your Dream Car Details 🚙' : 'Your Dream Vacation Details ✈️'}
+          </h2>
           
           <div className="grid gap-8 mb-12">
-            {/* Car Details Card */}
+            {/* Details Card */}
             <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
                 <div className="flex flex-col md:flex-row items-center gap-8">
-                  <ToyotaFortunerIcon className="w-48 h-48 text-gray-800" />
+                  {selectedGoal === 'car' ? (
+                    <Car className="w-48 h-48 text-gray-800" />
+                  ) : (
+                    <Calendar className="w-48 h-48 text-gray-800" />
+                  )}
                   <div className="flex-1">
-                    <h3 className="text-3xl font-bold mb-2">Dream Car</h3>
+                    <h3 className="text-3xl font-bold mb-2">{selectedGoal === 'car' ? 'Dream Car' : 'Dream Vacation'}</h3>
                     <div className="space-y-2 text-gray-600">
-                      <p>• Powerful Engine</p>
-                      <p>• Luxury Features</p>
-                      <p>• Premium Experience</p>
+                      {selectedGoal === 'car' ? (
+                        <>
+                          <p>• Powerful Engine</p>
+                          <p>• Luxury Features</p>
+                          <p>• Premium Experience</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>• Exotic Destinations</p>
+                          <p>• Luxury Accommodations</p>
+                          <p>• Unforgettable Experiences</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -311,7 +353,9 @@ const StockwiseOnboarding = () => {
             {/* Price Selection Section */}
             <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-bold">Set Your Dream Car Price</span>
+                <span className="text-2xl font-bold">
+                  {selectedGoal === 'car' ? 'Set Your Dream Car Price' : 'Set Your Dream Vacation Budget'}
+                </span>
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-600">Target:</span>
                   <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
@@ -324,25 +368,25 @@ const StockwiseOnboarding = () => {
                 <div className="relative">
                   <input
                     type="range"
-                    min={500000}
-                    max={25000000}
-                    step={100000}
+                    min={selectedGoal === 'car' ? 500000 : 100000}
+                    max={selectedGoal === 'car' ? 25000000 : 2000000}
+                    step={selectedGoal === 'car' ? 100000 : 50000}
                     value={amount}
                     onChange={(e) => setAmount(parseInt(e.target.value))}
                     className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
                               focus:outline-none focus:ring-2 focus:ring-orange-600"
                     style={{
-                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - 500000) / 24500000) * 100}%, #E5E7EB ${((amount - 500000) / 24500000) * 100}%, #E5E7EB 100%)`,
+                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB 100%)`,
                     }}
                   />
                   <div className="flex justify-between mt-4 text-sm font-medium">
                     <div className="text-center">
-                      <div className="text-gray-500">Min Price</div>
-                      <div className="text-lg font-bold">₹5L</div>
+                      <div className="text-gray-500">Min {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                      <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹5L' : '₹1L'}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-500">Max Price</div>
-                      <div className="text-lg font-bold">₹2.5Cr</div>
+                      <div className="text-gray-500">Max {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                      <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹2.5Cr' : '₹20L'}</div>
                     </div>
                   </div>
                 </div>
@@ -350,7 +394,9 @@ const StockwiseOnboarding = () => {
                 <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-gray-600">Your Dream Car Price</div>
+                      <div className="text-sm text-gray-600">
+                        {selectedGoal === 'car' ? 'Your Dream Car Price' : 'Your Dream Vacation Budget'}
+                      </div>
                       <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
                     </div>
                   </div>
@@ -364,7 +410,7 @@ const StockwiseOnboarding = () => {
               Let's check my spending! <ChevronRight className="ml-2" />
             </NeopopButton>
             <p className="text-gray-600 text-center">
-              We'll help you save for your dream car through smart investments
+              We'll help you save for your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'} through smart investments
             </p>
           </div>
         </div>
@@ -564,7 +610,9 @@ const StockwiseOnboarding = () => {
       <div className="container mx-auto px-4">
         <div className="py-8">
           <div className="flex justify-between items-center mb-10">
-            <h2 className="text-4xl font-bold">Your Path to the Dream Car 🎯</h2>
+            <h2 className="text-4xl font-bold">
+              {selectedGoal === 'car' ? 'Your Path to the Dream Car 🎯' : 'Your Path to the Dream Vacation ✈️'}
+            </h2>
             <NeopopButton 
               onClick={() => navigate('/learn')} 
               primary
@@ -594,7 +642,9 @@ const StockwiseOnboarding = () => {
                     +
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-4">Instead of ordering out</p>
+                <p className="text-sm text-gray-500 mt-4">
+                  {selectedGoal === 'car' ? 'Instead of ordering out' : 'From daily expenses'}
+                </p>
               </div>
             </div>
             
@@ -759,7 +809,7 @@ const StockwiseOnboarding = () => {
           <div className="border-4 border-gray-800 rounded-xl bg-gradient-to-br from-orange-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
             <h3 className="text-4xl font-bold mb-4">Ready to make this a reality? 🎯</h3>
             <p className="text-xl text-gray-600 mb-8">
-              Your daily savings could grow into your dream car. Let's learn how to make it happen!
+              Your daily savings could grow into your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'}. Let's learn how to make it happen!
             </p>
             <div className="flex flex-col items-center space-y-4">
               <NeopopButton 

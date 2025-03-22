@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ShoppingBag } from 'lucide-react';
+import { Check, ShoppingBag, TrendingUp, ArrowRight, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FinanceChatbot from '../components/FinanceChatbot';
 
@@ -1355,22 +1355,37 @@ const LearnPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50">
-      {/* Title Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-black">stockwise varsity</h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto mb-8">
-            Your comprehensive guide to financial markets. Learn at your own pace with our structured modules.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Link
-              to="/store"
-              className="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition-colors"
-            >
-              <ShoppingBag className="w-5 h-5 mr-2" />
-              Redeem Reward Tokens
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
+      {/* Header */}
+      <div className="bg-white border-b-4 border-gray-800 py-6 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold">Learn & Earn</h1>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/store"
+                className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                <span className="font-bold">Redeem Reward Tokens</span>
+              </Link>
+              <Link
+                to="/invest"
+                className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span className="font-bold">Invest Now</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/build-corpus"
+                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+              >
+                <DollarSign className="w-5 h-5" />
+                <span className="font-bold">Build Corpus</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
