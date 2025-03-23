@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield, Rocket, Target, BarChart, Sparkles, Flag } from 'lucide-react';
+import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield, Rocket, Target, BarChart, Sparkles, Flag, ShoppingBag } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import './StockwiseOnboarding.css';
@@ -278,7 +278,7 @@ function StockwiseOnboarding() {
                       borderBottom: '12px solid transparent',
                       borderRight: '16px solid #fff'
                     }}></div>
-                    <p className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text text-center">Hi, I'm Stocky! What's your name?</p>
+                    <p className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text text-center">Hi, I'm Jasper! 👋</p>
                     <div className="flex flex-col items-center gap-4">
                       <input
                         type="text"
@@ -362,62 +362,77 @@ function StockwiseOnboarding() {
       </div>
     </div>,
 
-    // Screen 2: Goal Selection
-    <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto py-8">
-          <h2 className="text-4xl font-bold text-center mb-12">What are you dreaming of, friend?</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-48 mb-10 relative">
-            {/* Dream Car Option */}
-            <div 
-              className={`relative overflow-hidden rounded-2xl border-4 ${hoverState === 'car' ? 'border-orange-500' : 'border-black'} transition-all duration-300 cursor-pointer`}
-              onMouseEnter={() => setHoverState('car')}
-              onMouseLeave={() => setHoverState(null)}
-              onClick={() => {
-                setAmount(3500000);
-                setSelectedGoal('car');
-                nextScreen();
-              }}
-            >
-              <div className="bg-white p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <Car className="w-12 h-12" />
-                  <ArrowRight className={`w-6 h-6 transform transition-transform duration-300 ${hoverState === 'car' ? 'translate-x-2' : ''}`} />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">Dream Car</h3>
-                <p className="text-gray-600">Start your journey towards owning your dream car through smart investments.</p>
-              </div>
+    // Screen 2: Choose Your Goal
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="flex flex-col items-center justify-center min-h-[calc(100vh-2rem)]"
+    >
+      <h2 className="text-5xl font-bold text-center mb-12 bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
+        Choose Your Goal
+      </h2>
+      
+      <div className="flex items-center justify-center gap-12 max-w-6xl mx-auto px-4">
+        {/* Option 1 */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-white p-8 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] cursor-pointer hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+          onClick={() => {
+            setAmount(3500000);
+            setSelectedGoal('car');
+            nextScreen();
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+              <Car className="w-10 h-10 text-orange-600" />
             </div>
-
-            {/* Dream Vacation Option */}
-            <div 
-              className={`relative overflow-hidden rounded-2xl border-4 ${hoverState === 'vacation' ? 'border-orange-500' : 'border-black'} transition-all duration-300 cursor-pointer`}
-              onMouseEnter={() => setHoverState('vacation')}
-              onMouseLeave={() => setHoverState(null)}
-              onClick={() => {
-                setAmount(500000);
-                setSelectedGoal('vacation');
-                nextScreen();
-              }}
-            >
-              <div className="bg-white p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <Calendar className="w-12 h-12" />
-                  <ArrowRight className={`w-6 h-6 transform transition-transform duration-300 ${hoverState === 'vacation' ? 'translate-x-2' : ''}`} />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">Dream Vacation</h3>
-                <p className="text-gray-600">Plan your perfect getaway through strategic investment planning.</p>
-              </div>
-            </div>
+            <h3 className="text-2xl font-bold mb-4">Dream Car</h3>
+            <p className="text-gray-600 text-center max-w-[250px] text-lg">
+              Start your journey towards owning your dream car through smart investments.
+            </p>
           </div>
-          
-          <p className="text-center text-lg text-gray-600 max-w-xl mx-auto">
-            Your daily habits can actually make your dreams come true faster than you think!
-          </p>
-        </div>
+        </motion.div>
+
+        {/* Avatar */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative"
+        >
+          <img 
+            src="/images/choose_goal.png" 
+            alt="Choose Goal Avatar"
+            className="w-[300px] h-[300px] object-contain"
+          />
+        </motion.div>
+
+        {/* Option 2 */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-white p-8 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] cursor-pointer hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+          onClick={() => {
+            setAmount(500000);
+            setSelectedGoal('vacation');
+            nextScreen();
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+              <Calendar className="w-10 h-10 text-orange-600" />
+            </div>
+            <h3 className="text-2xl font-bold mb-4">Dream Vacation</h3>
+            <p className="text-gray-600 text-center max-w-[250px] text-lg">
+              Plan your perfect getaway through strategic investment planning.
+            </p>
+          </div>
+        </motion.div>
       </div>
-    </div>,
+    </motion.div>,
 
     // Screen 3: Goal Amount
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">

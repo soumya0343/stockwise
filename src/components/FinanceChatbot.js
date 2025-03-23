@@ -12,6 +12,9 @@ const FinanceChatbot = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  // Store API key in a ref to avoid re-renders
+  const apiKeyRef = useRef(process.env.REACT_APP_GEMINI_API_KEY || '');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -21,47 +24,116 @@ const FinanceChatbot = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Mock response function for fallback when API fails
+  const generateMockResponse = (query) => {
+    // Simple keyword-based fallback responses
+    if (query.toLowerCase().includes('invest')) {
+      return "When investing, consider diversifying your portfolio across different asset classes to manage risk. Start with low-cost index funds if you're a beginner.";
+    } else if (query.toLowerCase().includes('budget')) {
+      return "Creating a budget starts with tracking your income and expenses. Try the 50/30/20 rule: 50% on needs, 30% on wants, and 20% on savings and debt repayment.";
+    } else if (query.toLowerCase().includes('retirement')) {
+      return "For retirement planning, take advantage of tax-advantaged accounts like 401(k)s and IRAs. Aim to save at least 15% of your income for retirement.";
+    } else {
+      return "That's an interesting finance question. A good approach would be to research reliable sources like financial education websites, speak with a certified financial planner, or check resources from consumer financial protection agencies.";
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     // Add user message
-    setMessages(prev => [...prev, { type: 'user', content: input }]);
+    const userInput = input;
+    setMessages(prev => [...prev, { type: 'user', content: userInput }]);
     setInput('');
     setIsLoading(true);
 
+    // Validate API key
+    if (!apiKeyRef.current) {
+      console.error("Missing API key");
+      setMessages(prev => [...prev, { 
+        type: 'bot', 
+        content: 'API configuration is missing. Please check your environment variables.'
+      }]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Using HuggingFace's free API for text generation
+      // Use AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       const response = await fetch(
-        "https://api-inference.huggingface.co/models/facebook/opt-125m",
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyRef.current}`,
         {
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${process.env.REACT_APP_HUGGINGFACE_API_KEY}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-          method: "POST",
           body: JSON.stringify({
-            inputs: `You are a financial advisor. Answer this question about finance: ${input}`,
-            parameters: {
-              max_length: 200,
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are a professional financial advisor. Please provide clear, specific, and practical financial advice for the following question. Focus on actionable steps and explain concepts in simple terms.
+
+Question: ${userInput}
+
+Please provide your response in a concise and structured manner.`
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
               temperature: 0.7,
-            },
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 800,
+            }
           }),
+          signal: controller.signal
         }
       );
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const result = await response.json();
       
-      // Add bot response
+      // Extract response from Gemini API structure
+      let botResponse;
+      
+      if (result.candidates && 
+          result.candidates[0] && 
+          result.candidates[0].content && 
+          result.candidates[0].content.parts && 
+          result.candidates[0].content.parts[0] && 
+          result.candidates[0].content.parts[0].text) {
+        botResponse = result.candidates[0].content.parts[0].text;
+      } else {
+        // Fallback to mock response if API data structure is unexpected
+        console.warn("Unexpected API response structure:", result);
+        botResponse = generateMockResponse(userInput);
+      }
+
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: result[0].generated_text || 'I apologize, but I couldn\'t generate a response. Please try asking your question differently.'
+        content: botResponse 
       }]);
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error calling Gemini API:', error);
+      
+      // Provide a fallback response instead of an error message
+      const fallbackResponse = generateMockResponse(userInput);
+      
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: 'I apologize, but I encountered an error. Please try again later.'
+        content: fallbackResponse
       }]);
     } finally {
       setIsLoading(false);
@@ -111,12 +183,12 @@ const FinanceChatbot = () => {
                 >
                   <div className="flex items-start">
                     {message.type === 'bot' && (
-                      <Bot className="w-5 h-5 mr-2 mt-1 text-orange-600" />
+                      <Bot className="w-5 h-5 mr-2 mt-1 text-orange-600 flex-shrink-0" />
                     )}
                     {message.type === 'user' && (
-                      <User className="w-5 h-5 mr-2 mt-1 text-white" />
+                      <User className="w-5 h-5 mr-2 mt-1 text-white flex-shrink-0" />
                     )}
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
                 </div>
               </div>
@@ -145,6 +217,7 @@ const FinanceChatbot = () => {
                 placeholder="Ask about finance..."
                 className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-orange-600"
                 disabled={isLoading}
+                onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
               />
               <button
                 type="submit"
@@ -165,4 +238,4 @@ const FinanceChatbot = () => {
   );
 };
 
-export default FinanceChatbot; 
+export default FinanceChatbot;
