@@ -29,6 +29,18 @@ function StockwiseOnboarding() {
   const [showNameInput, setShowNameInput] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   
+  // Add keyboard event listener for Enter key
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === 'Enter' && showWelcome) {
+        nextScreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showWelcome]);
+  
   // Sample transaction data
   const transactions = [
     { id: 1, date: '22 Mar', desc: 'Swiggy - Dinner', amount: -210, category: 'Food', highlight: true },
@@ -240,10 +252,9 @@ function StockwiseOnboarding() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <h1 className="text-6xl font-bold relative">
+            <h1 className="text-6xl font-bold">
               <span className="text-black">stock</span>
               <span className="text-[#E86A33]">wise</span>
-              <span className="absolute w-2.5 h-2.5 bg-[#E86A33] rounded-full" style={{ top: '-5px', right: '108px' }}></span>
             </h1>
           </motion.div>
           
@@ -343,6 +354,11 @@ function StockwiseOnboarding() {
                       transition={{ delay: 0.3 }}
                       onClick={nextScreen}
                       className="w-full mt-6 px-8 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 text-xl shadow-[4px_4px_0px_rgba(31,41,55,0.8)] flex items-center justify-center"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          nextScreen();
+                        }
+                      }}
                     >
                       Let's Begin! <ChevronRight className="ml-2" />
                     </motion.button>

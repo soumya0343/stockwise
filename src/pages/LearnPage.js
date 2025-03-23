@@ -1537,10 +1537,9 @@ const LearnPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <h1 className="text-4xl font-bold relative">
+              <h1 className="text-4xl font-bold">
                 <span className="text-black">stock</span>
                 <span className="text-[#E86A33]">wise</span>
-                <span className="absolute w-2 h-2 bg-[#E86A33] rounded-full" style={{ top: '-3px', right: '90px' }}></span>
               </h1>
               <p className="text-gray-600 mt-2 text-lg">
                 Your journey to financial wisdom starts here
