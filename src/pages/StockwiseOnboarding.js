@@ -345,17 +345,17 @@ function StockwiseOnboarding() {
                   </motion.div>
                 )}
               </div>
-            </div>
-            
+          </div>
+          
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
               className="flex justify-center mt-8"
             >
-              <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
-                <span className="text-sm font-medium">Made for BITS Goa Hackathon 💪</span>
-              </div>
+            <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
+              <span className="text-sm font-medium">Made for BITS Goa Hackathon 💪</span>
+            </div>
             </motion.div>
           </div>
         </div>
@@ -428,8 +428,8 @@ function StockwiseOnboarding() {
             <h3 className="text-2xl font-bold mb-4">Dream Vacation</h3>
             <p className="text-gray-600 text-center max-w-[250px] text-lg">
               Plan your perfect getaway through strategic investment planning.
-            </p>
-          </div>
+          </p>
+        </div>
         </motion.div>
       </div>
     </motion.div>,
@@ -442,17 +442,17 @@ function StockwiseOnboarding() {
             <div className="flex-1">
               <div className="grid gap-8">
                 {/* Details Card */}
-                <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-                  <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
-                    <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+              <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
+                <div className="flex flex-col md:flex-row items-center gap-8">
                       {selectedGoal === 'car' ? (
                         <Car className="w-48 h-48 text-gray-800" />
                       ) : (
                         <Calendar className="w-48 h-48 text-gray-800" />
                       )}
-                      <div className="flex-1">
+                  <div className="flex-1">
                         <h3 className="text-3xl font-bold mb-2">{selectedGoal === 'car' ? 'Dream Car' : 'Dream Vacation'}</h3>
-                        <div className="space-y-2 text-gray-600">
+                    <div className="space-y-2 text-gray-600">
                           {selectedGoal === 'car' ? (
                             <>
                               <p>• Powerful Engine</p>
@@ -466,68 +466,68 @@ function StockwiseOnboarding() {
                               <p>• Unforgettable Experiences</p>
                             </>
                           )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Price Selection Section */}
-                <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-2xl font-bold">
-                      {selectedGoal === 'car' ? 'Set Your Dream Car Price' : 'Set Your Dream Vacation Budget'}
-                    </span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-gray-600">Target:</span>
-                      <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
-                        {(amount/100000).toFixed(1)}L
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="relative">
-                      <input
-                        type="range"
-                        min={selectedGoal === 'car' ? 500000 : 100000}
-                        max={selectedGoal === 'car' ? 25000000 : 2000000}
-                        step={selectedGoal === 'car' ? 100000 : 50000}
-                        value={amount}
-                        onChange={(e) => setAmount(parseInt(e.target.value))}
-                        className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
-                                  focus:outline-none focus:ring-2 focus:ring-orange-600"
-                        style={{
-                          backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB 100%)`,
-                        }}
-                      />
-                      <div className="flex justify-between mt-4 text-sm font-medium">
-                        <div className="text-center">
-                          <div className="text-gray-500">Min {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
-                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹5L' : '₹1L'}</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-gray-500">Max {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
-                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹2.5Cr' : '₹20L'}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm text-gray-600">
-                            {selectedGoal === 'car' ? 'Your Dream Car Price' : 'Your Dream Vacation Budget'}
-                          </div>
-                          <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             
+                {/* Price Selection Section */}
+            <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+              <div className="flex items-center justify-between mb-6">
+                    <span className="text-2xl font-bold">
+                      {selectedGoal === 'car' ? 'Set Your Dream Car Price' : 'Set Your Dream Vacation Budget'}
+                    </span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-gray-600">Target:</span>
+                  <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
+                    {(amount/100000).toFixed(1)}L
+                  </span>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="relative">
+                  <input
+                    type="range"
+                        min={selectedGoal === 'car' ? 500000 : 100000}
+                        max={selectedGoal === 'car' ? 25000000 : 2000000}
+                        step={selectedGoal === 'car' ? 100000 : 50000}
+                    value={amount}
+                    onChange={(e) => setAmount(parseInt(e.target.value))}
+                    className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
+                              focus:outline-none focus:ring-2 focus:ring-orange-600"
+                    style={{
+                          backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between mt-4 text-sm font-medium">
+                    <div className="text-center">
+                          <div className="text-gray-500">Min {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹5L' : '₹1L'}</div>
+                    </div>
+                    <div className="text-center">
+                          <div className="text-gray-500">Max {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹2.5Cr' : '₹20L'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                          <div className="text-sm text-gray-600">
+                            {selectedGoal === 'car' ? 'Your Dream Car Price' : 'Your Dream Vacation Budget'}
+                    </div>
+                      <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
             <div className="flex-shrink-0 flex flex-col items-center mt-32">
               <motion.img
                 initial={{ scale: 0.5, opacity: 0 }}
@@ -537,13 +537,13 @@ function StockwiseOnboarding() {
                 alt="Excited Avatar"
                 className="w-[300px] h-[300px] object-cover mb-8"
               />
-              <div className="flex flex-col items-center">
-                <NeopopButton onClick={nextScreen} primary className="mb-4">
-                  Let's check my spending! <ChevronRight className="ml-2" />
-                </NeopopButton>
-                <p className="text-gray-600 text-center">
+          <div className="flex flex-col items-center">
+            <NeopopButton onClick={nextScreen} primary className="mb-4">
+              Let's check my spending! <ChevronRight className="ml-2" />
+            </NeopopButton>
+            <p className="text-gray-600 text-center">
                   We'll help you save for your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'} through smart investments
-                </p>
+            </p>
               </div>
             </div>
           </div>
@@ -813,7 +813,7 @@ function StockwiseOnboarding() {
                 <p className="text-sm text-gray-500 mt-4">Time to reach your goal</p>
               </div>
             </div>
-
+            
             <div className="p-6 border-4 border-gray-800 rounded-xl bg-white shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
               <div className="text-center">
                 <p className="text-lg font-medium mb-4">Expected Returns</p>
@@ -857,7 +857,7 @@ function StockwiseOnboarding() {
                 Time to Goal: <span className="font-bold text-orange-600">{years} years</span>
               </div>
             </div>
-
+            
             <div className="h-80 mb-6">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
@@ -1027,7 +1027,7 @@ function StockwiseOnboarding() {
               />
             )}
           </motion.div>
-        </div>
+            </div>
       )}
       
       {/* Step content */}
@@ -1056,9 +1056,9 @@ function StockwiseOnboarding() {
             }`}>
               {title}
             </h3>
-          </div>
-        </motion.div>
       </div>
+        </motion.div>
+    </div>
     </motion.div>
   );
 
@@ -1093,7 +1093,7 @@ function StockwiseOnboarding() {
               </h2>
               <div className="h-1.5 w-32 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
             </motion.div>
-          </div>
+              </div>
           
           <div className="space-y-2">
             {roadmapSteps.map((step, index) => (
@@ -1104,8 +1104,8 @@ function StockwiseOnboarding() {
                 isActive={currentScreen === index}
                 isCompleted={currentScreen > index}
               />
-            ))}
-          </div>
+          ))}
+        </div>
 
           {/* Progress indicator */}
           <motion.div 
@@ -1152,24 +1152,24 @@ function StockwiseOnboarding() {
 // Custom food icon component
 function FoodIcon({ size = 24, className = "" }) {
   return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M21 9V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6m5-1h2a3 3 0 0 0 3-3v-2"/>
-      <circle cx="11.5" cy="11.5" r="2.5"/>
-      <path d="M11.5 14v4"/>
-      <rect x="8" y="18" width="7" height="2" rx="1"/>
-    </svg>
-  );
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M21 9V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6m5-1h2a3 3 0 0 0 3-3v-2"/>
+    <circle cx="11.5" cy="11.5" r="2.5"/>
+    <path d="M11.5 14v4"/>
+    <rect x="8" y="18" width="7" height="2" rx="1"/>
+  </svg>
+);
 }
 
-export default StockwiseOnboarding;
+export default StockwiseOnboarding; 
