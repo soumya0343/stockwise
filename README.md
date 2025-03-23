@@ -1,32 +1,33 @@
-# Stockwise - Smart Investment Planning App 🚀
+# Stockwise
 
-A modern web application that helps users plan their investments and achieve their financial goals through interactive visualization and personalized insights.
+A comprehensive investment learning platform with gamification features. Learn about stock markets, mutual funds, technical analysis, and more while earning rewards and tracking your progress.
 
-## Features ✨
+## Features
 
-- Interactive onboarding flow
-- Goal-based investment planning
-- Transaction analysis and insights
-- Investment growth visualization
-- Educational content for financial literacy
+- Interactive learning modules with comprehensive content
+- Gamification system with XP, achievements, and daily goals
+- Progress tracking and streak system
+- Quiz-based learning validation
+- Real-time rewards and notifications
+- Modern, responsive UI with animations
 
-## Tech Stack 🛠️
+## Tech Stack
 
 - React.js
 - Tailwind CSS
-- Recharts for data visualization
-- React Router for navigation
+- Framer Motion
+- Recharts
+- Lucide React Icons
 
-## Getting Started 🏁
+## Getting Started
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/stockwise.git
+git clone [your-repo-url]
 ```
 
 2. Install dependencies:
 ```bash
-cd stockwise
 npm install
 ```
 
@@ -37,32 +38,19 @@ npm start
 
 4. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-## Project Structure 📁
+## Learning Modules
 
-```
-stockwise/
-├── src/
-│   ├── pages/
-│   │   ├── StockwiseOnboarding.js
-│   │   └── LearnPage.js
-│   ├── components/
-│   ├── App.js
-│   └── index.js
-├── public/
-├── package.json
-└── README.md
-```
+- Introduction to Stock Markets
+- Mutual Funds & SIP
+- Technical Analysis
+- Fundamental Analysis
+- Options Trading
+- Futures Trading
 
-## Contributing 🤝
+## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-## License 📄
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Made with ❤️ for BITS Goa Hackathon
+[MIT](https://choosealicense.com/licenses/mit/)

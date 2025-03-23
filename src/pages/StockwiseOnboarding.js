@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import './StockwiseOnboarding.css';
 
 // Main App Component
-const StockwiseOnboarding = () => {
+function StockwiseOnboarding() {
   const navigate = useNavigate();
 
   // State management
@@ -860,83 +861,29 @@ const StockwiseOnboarding = () => {
       </div>
     </div>
   );
-};
+}
 
 // Custom food icon component
-const FoodIcon = ({ size = 24, className = "" }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M21 9V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6m5-1h2a3 3 0 0 0 3-3v-2"/>
-    <circle cx="11.5" cy="11.5" r="2.5"/>
-    <path d="M11.5 14v4"/>
-    <rect x="8" y="18" width="7" height="2" rx="1"/>
-  </svg>
-);
+function FoodIcon({ size = 24, className = "" }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M21 9V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6m5-1h2a3 3 0 0 0 3-3v-2"/>
+      <circle cx="11.5" cy="11.5" r="2.5"/>
+      <path d="M11.5 14v4"/>
+      <rect x="8" y="18" width="7" height="2" rx="1"/>
+    </svg>
+  );
+}
 
-// Update the style element
-const style = document.createElement('style');
-style.textContent = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-  
-  body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-  }
-  
-  #root {
-    min-height: 100vh;
-  }
-  
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #1F2937;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    box-shadow: 0 0 0 3px #F97316;
-  }
-  
-  .screen-transition-enter {
-    opacity: 0;
-    transform: translateX(10px);
-  }
-  
-  .screen-transition-enter-active {
-    opacity: 1;
-    transform: translateX(0);
-    transition: opacity 360ms, transform 360ms;
-  }
-  
-  .screen-transition-exit {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  
-  .screen-transition-exit-active {
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 360ms, transform 360ms;
-  }
-  
-  .duration-360 {
-    transition-duration: 360ms;
-  }
-`;
-document.head.appendChild(style);
-
-export default StockwiseOnboarding; 
+export default StockwiseOnboarding;

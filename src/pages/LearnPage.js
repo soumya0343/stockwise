@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ShoppingBag, TrendingUp, ArrowRight, DollarSign } from 'lucide-react';
+import { Check, ShoppingBag, TrendingUp, ArrowRight, DollarSign, Trophy, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FinanceChatbot from '../components/FinanceChatbot';
+import { useGamification } from '../contexts/GamificationContext';
+import { XPBar, StreakCounter, DailyGoalProgress, AchievementBadge } from '../components/GamificationElements';
+import { ACHIEVEMENTS } from '../contexts/GamificationContext';
+import StreakDisplay from '../components/StreakDisplay';
 
 const LearnPage = () => {
   const [selectedModule, setSelectedModule] = useState(null);
@@ -28,6 +32,13 @@ const LearnPage = () => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAttempts, setQuizAttempts] = useState({});
 
+  const { 
+    addXP, 
+    unlockAchievement, 
+    completeChapter,
+    achievements 
+  } = useGamification();
+
   // Save progress whenever completedChapters changes
   useEffect(() => {
     localStorage.setItem('completedChapters', JSON.stringify([...completedChapters]));
@@ -42,6 +53,43 @@ const LearnPage = () => {
   useEffect(() => {
     localStorage.setItem('totalTokens', totalTokens.toString());
   }, [totalTokens]);
+
+  // Update the useEffect for streak check
+  useEffect(() => {
+    const savedStreak = parseInt(localStorage.getItem('streak') || '0');
+    if (savedStreak !== 6) { // Set initial streak to 6
+      localStorage.setItem('streak', '6');
+      // Add 50 tokens for the streak
+      const streakTokens = 50;
+      setTotalTokens(prev => prev + streakTokens);
+      localStorage.setItem('totalTokens', (totalTokens + streakTokens).toString());
+    }
+  }, []);
+
+  // Add effect to check achievements on mount and when completedChapters changes
+  useEffect(() => {
+    // Check First Lesson Achievement
+    if (completedChapters.size > 0) {
+      unlockAchievement('FIRST_LESSON');
+    }
+
+    // Check Perfect Quiz Achievement
+    const hasCompletedPerfectQuiz = Object.values(chapterProgress).some(progress => progress === 100);
+    if (hasCompletedPerfectQuiz) {
+      unlockAchievement('PERFECT_QUIZ');
+    }
+
+    // Check Token Master Achievement
+    if (totalTokens >= 1000) {
+      unlockAchievement('TOKEN_MASTER');
+    }
+
+    // Check Week Streak Achievement
+    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+    if (currentStreak >= 7) {
+      unlockAchievement('WEEK_STREAK');
+    }
+  }, [completedChapters, chapterProgress, totalTokens, unlockAchievement]);
 
   // Chapter content mapping
   const chapterContent = {
@@ -1259,18 +1307,93 @@ const LearnPage = () => {
   };
 
   const handleChapterComplete = (chapter, score, total, tokens) => {
+    // Update completed chapters
     setCompletedChapters(prev => {
       const newSet = new Set(prev);
       newSet.add(chapter);
       return newSet;
     });
 
+    // Update chapter progress
     setChapterProgress(prev => ({
       ...prev,
       [chapter]: (score / total) * 100
     }));
 
-    setTotalTokens(prev => prev + tokens);
+    // Update tokens
+    const newTotalTokens = totalTokens + tokens;
+    setTotalTokens(newTotalTokens);
+    
+    // Add XP for completing chapter and update daily progress
+    const xpEarned = Math.round((score / total) * 100) + 50; // Base XP + performance bonus
+    addXP(xpEarned);
+    completeChapter(chapter);
+    
+    // Check and unlock achievements
+    const completedCount = completedChapters.size + 1;
+
+    // First Lesson Achievement
+    if (completedCount === 1) {
+      unlockAchievement('FIRST_LESSON');
+    }
+
+    // Perfect Score Achievement
+    if (score === total) {
+      unlockAchievement('PERFECT_QUIZ');
+    }
+
+    // Token Master Achievement
+    if (newTotalTokens >= 1000) {
+      unlockAchievement('TOKEN_MASTER');
+    }
+
+    // Week Streak Achievement - check if streak is 7 or more
+    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+    if (currentStreak >= 7) {
+      unlockAchievement('WEEK_STREAK');
+    }
+
+    // Show completion notification
+    showCompletionNotification(chapter, xpEarned, tokens);
+
+    // Close chapter content
+    setTimeout(() => {
+      setShowChapterContent(false);
+      setShowQuiz(false);
+      setQuizAnswers({});
+      setSubmittedAnswers({});
+      setQuizAttempts({});
+    }, 2000);
+  };
+
+  // Add this new function for showing completion notification
+  const showCompletionNotification = (chapter, xp, tokens) => {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-white p-6 rounded-xl border-4 border-green-500 shadow-lg z-50 animate-slide-in';
+    notification.innerHTML = `
+      <div class="flex items-center space-x-4">
+        <div class="text-4xl">🎉</div>
+        <div>
+          <h3 class="font-bold text-lg text-green-600">Chapter Completed!</h3>
+          <p class="text-gray-600">You earned:</p>
+          <div class="flex items-center space-x-4 mt-2">
+            <div class="flex items-center">
+              <span class="text-yellow-500 font-bold">+${xp}</span>
+              <span class="ml-1">XP</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-purple-500 font-bold">+${tokens}</span>
+              <span class="ml-1">Tokens</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.classList.add('animate-slide-out');
+      setTimeout(() => notification.remove(), 500);
+    }, 3000);
   };
 
   const isChapterCompleted = (moduleId, chapter) => {
@@ -1356,22 +1479,50 @@ const LearnPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
+      <style>
+        {`
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+          .animate-slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+          }
+          .animate-slide-out {
+            animation: slideOut 0.5s ease-in forwards;
+          }
+        `}
+      </style>
+      
       {/* Header */}
-      <div className="bg-white border-b-4 border-gray-800 py-6 mb-8">
+      <div className="bg-white border-b-4 border-gray-800 py-8 mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold">Learn & Earn</h1>
+            <div className="flex flex-col">
+              <h1 
+                className="text-4xl font-bold bg-gradient-to-r from-yellow-700 via-amber-600 to-yellow-500 bg-clip-text text-transparent"
+              >
+                Stockwise
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">
+                Your journey to financial wisdom starts here
+              </p>
+            </div>
             <div className="flex items-center space-x-4">
               <Link
                 to="/store"
-                className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+                className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-50"
               >
                 <ShoppingBag className="w-5 h-5" />
                 <span className="font-bold">Redeem Reward Tokens</span>
               </Link>
               <Link
                 to="/invest"
-                className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+                className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-900"
               >
                 <TrendingUp className="w-5 h-5" />
                 <span className="font-bold">Invest Now</span>
@@ -1379,7 +1530,7 @@ const LearnPage = () => {
               </Link>
               <Link
                 to="/build-corpus"
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
+                className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:from-green-700 hover:to-emerald-700"
               >
                 <DollarSign className="w-5 h-5" />
                 <span className="font-bold">Build Corpus</span>
@@ -1390,89 +1541,182 @@ const LearnPage = () => {
         </div>
       </div>
 
-      {/* Updated Progress Tracker */}
-      <div className="bg-black text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex-1 mr-8">
-              <h2 className="text-2xl font-bold mb-2">Track Your Progress</h2>
-              <p className="text-gray-400 mb-4">Complete modules to earn certificates</p>
-              <div className="bg-gray-800 rounded-full h-4 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-orange-500 to-orange-300 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(completedChapters.size / 30) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-sm text-gray-400">
-                <span>{completedChapters.size} chapters completed</span>
-                <span>{30 - completedChapters.size} remaining</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-12">
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-1">
-                  {Math.round((completedChapters.size / 30) * 100)}%
-                </div>
-                <div className="text-sm text-gray-400">Completion Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-1">
-                  {totalTokens}
-                </div>
-                <div className="text-sm text-gray-400">Tokens Earned</div>
-              </div>
-            </div>
+      {/* Gamification Stats Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="h-full">
+            <XPBar />
+          </div>
+          <div className="h-full">
+            <DailyGoalProgress />
+          </div>
+          <div className="h-full">
+            <StreakDisplay />
           </div>
         </div>
       </div>
 
-      {/* Learning Modules */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 mt-16">
-        <div className="grid grid-cols-1 gap-8">
-          {modules.map((module) => (
-            <div 
-              key={module.id}
-              className="bg-white rounded-xl border-4 border-black p-6 cursor-pointer hover:shadow-lg transition-shadow duration-300"
-              onClick={() => setSelectedModule(selectedModule === module.id ? null : module.id)}
-            >
-              {/* Module Header */}
-              <div className="flex items-start space-x-4 mb-4">
-                <div className={`p-3 rounded-lg ${getColorClasses(module.color)}`}>
-                  <span className="text-lg">📚</span>
+      {/* Achievements Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+          <h2 className="text-2xl font-bold mb-4 flex items-center">
+            <Trophy className="w-6 h-6 mr-2" />
+            Achievements
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {Object.entries(ACHIEVEMENTS).map(([id, achievement]) => (
+              <div key={id} className="relative group">
+                <AchievementBadge
+                  achievement={achievement}
+                  unlocked={achievements.includes(id)}
+                />
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-2 left-1/2 transform -translate-x-1/2 translate-y-full bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                  {getAchievementProgress(id)}
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1 text-black">{module.title}</h3>
-                  <div className="flex items-center text-gray-600">
-                    <span className="text-sm">⏱️ {module.duration}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Courses Progress Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 p-8 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-300 via-pink-300 to-red-300"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-300 via-blue-300 to-indigo-300"></div>
+          
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Star className="w-8 h-8 text-yellow-500 animate-pulse" />
+                <div className="absolute inset-0 w-8 h-8 bg-yellow-500 blur-sm -z-10"></div>
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                Course Progress
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
+              <span className="font-bold text-green-600 text-lg">{modules.reduce((acc, module) => 
+                acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+              )}</span>
+              <span className="text-gray-400">/</span>
+              <span className="font-medium text-gray-600">{modules.reduce((acc, module) => acc + module.chapters.length, 0)} Chapters</span>
+            </div>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
+            <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-8 overflow-hidden border-2 border-gray-800">
+              <div 
+                className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
+                style={{ 
+                  width: `${(modules.reduce((acc, module) => 
+                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
+                }}
+              >
+                <div className="absolute inset-0 overflow-hidden opacity-75">
+                  <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
+                    {[...Array(10)].map((_, i) => (
+                      <div key={i} className="h-8 w-4 bg-white/20 -skew-x-[40deg] mx-2" />
+                    ))}
                   </div>
                 </div>
               </div>
+            </div>
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
+              style={{ 
+                left: `${Math.min(Math.max((modules.reduce((acc, module) => 
+                  acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
+              }}
+            >
+              <div className="bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
+                <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
+                  {Math.round((modules.reduce((acc, module) => 
+                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
+                </span>
+              </div>
+            </div>
+          </div>
 
-              {/* Chapters */}
-              <div className={`space-y-3 transition-all duration-300 ${selectedModule === module.id ? 'block' : 'hidden'}`}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
+              <span className="font-medium">Completed:</span>
+              <span className="ml-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+                {modules.reduce((acc, module) => 
+                  acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                )} chapters
+              </span>
+            </div>
+            <div className="flex items-center bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
+              <span className="font-medium">Remaining:</span>
+              <span className="ml-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                {modules.reduce((acc, module) => 
+                  acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
+                )} chapters
+              </span>
+            </div>
+          </div>
+
+          <style>
+            {`
+              @keyframes move-right-to-left {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50px); }
+              }
+            `}
+          </style>
+        </div>
+      </div>
+
+      {/* Learning Modules */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((module) => (
+            <motion.div
+              key={module.id}
+              whileHover={{ scale: 1.02 }}
+              className={`${module.color} p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-bold">{module.title}</h2>
+                <div className="flex items-center">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  <span className="ml-1 font-bold">
+                    {module.chapters.filter(chapter => isChapterCompleted(module.id, chapter)).length} / {module.chapters.length}
+                  </span>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-4">{module.description}</p>
+              <div className="text-sm text-gray-500 mb-4">{module.duration}</div>
+              <div className="space-y-2">
                 {module.chapters.map((chapter, index) => (
                   <button
                     key={index}
+                    onClick={() => handleChapterClick(module.id, chapter)}
                     className={getChapterButtonClasses(module.id, chapter)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleChapterClick(module.id, chapter);
-                    }}
                   >
-                    <span className="mr-2">
-                      {isChapterCompleted(module.id, chapter) ? '✅' : '📖'}
-                    </span>
-                    <span className={`${isChapterCompleted(module.id, chapter) ? 'text-orange-700' : 'text-gray-700'}`}>
-                      {chapter}
-                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium">{chapter}</div>
+                      {isChapterCompleted(module.id, chapter) && (
+                        <div className="text-sm text-green-600">
+                          {chapterProgress[chapter]}% Complete
+                        </div>
+                      )}
+                    </div>
+                    {isChapterCompleted(module.id, chapter) && (
+                      <Check className="w-5 h-5 text-green-500" />
+                    )}
                   </button>
                 ))}
-                <button className="w-full mt-4 px-4 py-2 bg-black text-white rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-800 transition">
-                  <span>Start Learning</span>
-                  <span>→</span>
-                </button>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -1662,6 +1906,24 @@ const LearnPage = () => {
       <FinanceChatbot />
     </div>
   );
+};
+
+// Add this helper function to get achievement progress
+const getAchievementProgress = (achievementId) => {
+  switch (achievementId) {
+    case 'FIRST_LESSON':
+      return 'Complete your first lesson';
+    case 'PERFECT_QUIZ':
+      return 'Get 100% on any quiz';
+    case 'TOKEN_MASTER':
+      return 'Earn 1000 tokens';
+    case 'WEEK_STREAK':
+      return 'Maintain a 7-day streak';
+    case 'INVESTMENT_START':
+      return 'Make your first investment';
+    default:
+      return 'Keep learning to unlock';
+  }
 };
 
 export default LearnPage;
