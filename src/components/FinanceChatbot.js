@@ -6,15 +6,32 @@ const FinanceChatbot = () => {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      content: 'Hi! I\'m your finance learning assistant. I can help you understand investment concepts, market trends, and financial planning. What would you like to learn about?'
+      content: 'Hi! I\'m Jasper, your finance learning assistant. I can help you understand investment concepts, market trends, and financial planning. What would you like to learn about?'
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isApiConfigured, setIsApiConfigured] = useState(false);
   const messagesEndRef = useRef(null);
   
   // Store API key in a ref to avoid re-renders
   const apiKeyRef = useRef(process.env.REACT_APP_GEMINI_API_KEY || '');
+
+  useEffect(() => {
+    // Check if API key is configured
+    setIsApiConfigured(!!apiKeyRef.current);
+    
+    // If API is not configured, add a warning message
+    if (!apiKeyRef.current) {
+      setMessages(prev => [
+        ...prev,
+        {
+          type: 'bot',
+          content: '⚠️ I\'m currently running in demo mode with limited responses. For full functionality, please configure the API key.'
+        }
+      ]);
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -24,17 +41,21 @@ const FinanceChatbot = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Mock response function for fallback when API fails
+  // Enhanced mock response function
   const generateMockResponse = (query) => {
-    // Simple keyword-based fallback responses
-    if (query.toLowerCase().includes('invest')) {
-      return "When investing, consider diversifying your portfolio across different asset classes to manage risk. Start with low-cost index funds if you're a beginner.";
-    } else if (query.toLowerCase().includes('budget')) {
-      return "Creating a budget starts with tracking your income and expenses. Try the 50/30/20 rule: 50% on needs, 30% on wants, and 20% on savings and debt repayment.";
-    } else if (query.toLowerCase().includes('retirement')) {
-      return "For retirement planning, take advantage of tax-advantaged accounts like 401(k)s and IRAs. Aim to save at least 15% of your income for retirement.";
+    const queryLower = query.toLowerCase();
+    
+    // More comprehensive keyword matching
+    if (queryLower.includes('invest') || queryLower.includes('stock') || queryLower.includes('market')) {
+      return "When investing, it's important to:\n\n1. Diversify your portfolio\n2. Start with index funds for beginners\n3. Understand your risk tolerance\n4. Have a long-term perspective\n5. Regular monitoring and rebalancing";
+    } else if (queryLower.includes('budget') || queryLower.includes('save') || queryLower.includes('spending')) {
+      return "Here's a practical budgeting approach:\n\n1. Follow the 50/30/20 rule:\n   • 50% for needs\n   • 30% for wants\n   • 20% for savings\n2. Track expenses regularly\n3. Set specific financial goals\n4. Use budgeting apps\n5. Review and adjust monthly";
+    } else if (queryLower.includes('retirement') || queryLower.includes('pension')) {
+      return "Key retirement planning steps:\n\n1. Start early to benefit from compound interest\n2. Maximize employer match in retirement accounts\n3. Diversify retirement investments\n4. Consider tax implications\n5. Regular portfolio review and rebalancing";
+    } else if (queryLower.includes('mutual fund') || queryLower.includes('sip')) {
+      return "Understanding Mutual Funds:\n\n1. Types: Equity, Debt, Hybrid\n2. Benefits of SIP:\n   • Rupee cost averaging\n   • Disciplined investing\n   • Power of compounding\n3. Choose funds based on:\n   • Investment goals\n   • Risk tolerance\n   • Time horizon";
     } else {
-      return "That's an interesting finance question. A good approach would be to research reliable sources like financial education websites, speak with a certified financial planner, or check resources from consumer financial protection agencies.";
+      return "Here are some general financial tips:\n\n1. Create an emergency fund\n2. Pay off high-interest debt first\n3. Invest in your financial education\n4. Maintain a good credit score\n5. Review your finances regularly\n\nFeel free to ask specific questions about investing, budgeting, or retirement planning!";
     }
   };
 
@@ -48,21 +69,20 @@ const FinanceChatbot = () => {
     setInput('');
     setIsLoading(true);
 
-    // Validate API key
-    if (!apiKeyRef.current) {
-      console.error("Missing API key");
-      setMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: 'API configuration is missing. Please check your environment variables.'
-      }]);
-      setIsLoading(false);
+    // If API is not configured, use mock response
+    if (!isApiConfigured) {
+      setTimeout(() => {
+        const mockResponse = generateMockResponse(userInput);
+        setMessages(prev => [...prev, { type: 'bot', content: mockResponse }]);
+        setIsLoading(false);
+      }, 1000); // Add a small delay to make it feel more natural
       return;
     }
 
     try {
       // Use AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10 seconds
       
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyRef.current}`,
@@ -76,11 +96,16 @@ const FinanceChatbot = () => {
               {
                 parts: [
                   {
-                    text: `You are a professional financial advisor. Please provide clear, specific, and practical financial advice for the following question. Focus on actionable steps and explain concepts in simple terms.
+                    text: `You are Jasper, a friendly and knowledgeable financial advisor. Provide clear, specific, and practical financial advice for the following question. Focus on actionable steps and explain concepts in simple terms. Keep your response concise and well-structured, using bullet points or numbered lists where appropriate.
 
 Question: ${userInput}
 
-Please provide your response in a concise and structured manner.`
+Remember to:
+- Be clear and specific
+- Use simple language
+- Provide actionable steps
+- Structure your response well
+- Keep it concise but informative`
                   }
                 ]
               }
@@ -104,20 +129,18 @@ Please provide your response in a concise and structured manner.`
 
       const result = await response.json();
       
-      // Extract response from Gemini API structure
-      let botResponse;
+      // Extract response with better error handling
+      let botResponse = '';
       
-      if (result.candidates && 
-          result.candidates[0] && 
-          result.candidates[0].content && 
-          result.candidates[0].content.parts && 
-          result.candidates[0].content.parts[0] && 
-          result.candidates[0].content.parts[0].text) {
+      try {
         botResponse = result.candidates[0].content.parts[0].text;
-      } else {
-        // Fallback to mock response if API data structure is unexpected
-        console.warn("Unexpected API response structure:", result);
-        botResponse = generateMockResponse(userInput);
+      } catch (error) {
+        console.warn("Error parsing API response:", error);
+        throw new Error("Invalid API response structure");
+      }
+
+      if (!botResponse) {
+        throw new Error("Empty response from API");
       }
 
       setMessages(prev => [...prev, { 
@@ -126,15 +149,32 @@ Please provide your response in a concise and structured manner.`
       }]);
 
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
+      console.error('Chatbot error:', error);
       
-      // Provide a fallback response instead of an error message
-      const fallbackResponse = generateMockResponse(userInput);
+      // Different error messages based on error type
+      let errorMessage;
+      if (error.name === 'AbortError') {
+        errorMessage = "I'm taking too long to respond. Let me try a simpler answer.";
+      } else if (error.message.includes('HTTP error')) {
+        errorMessage = "I'm having trouble connecting to my knowledge base. Let me provide a basic response instead.";
+      } else {
+        errorMessage = "I encountered an issue processing your question. Let me give you a general response.";
+      }
       
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        content: fallbackResponse
+        content: errorMessage
       }]);
+      
+      // Add fallback response after error message
+      setTimeout(() => {
+        const fallbackResponse = generateMockResponse(userInput);
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: fallbackResponse
+        }]);
+      }, 1000);
+      
     } finally {
       setIsLoading(false);
     }

@@ -240,7 +240,11 @@ function StockwiseOnboarding() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <h1 className="text-6xl font-bold">stock<span className="text-orange-600">wise</span></h1>
+            <h1 className="text-6xl font-bold relative">
+              <span className="text-black">stock</span>
+              <span className="text-[#E86A33]">wise</span>
+              <span className="absolute w-2.5 h-2.5 bg-[#E86A33] rounded-full" style={{ top: '-5px', right: '108px' }}></span>
+            </h1>
           </motion.div>
           
           <div className="flex flex-col items-center justify-center">

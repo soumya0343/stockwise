@@ -1537,10 +1537,10 @@ const LearnPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <h1 
-                className="text-4xl font-bold bg-gradient-to-r from-yellow-700 via-amber-600 to-yellow-500 bg-clip-text text-transparent"
-              >
-                Stockwise
+              <h1 className="text-4xl font-bold relative">
+                <span className="text-black">stock</span>
+                <span className="text-[#E86A33]">wise</span>
+                <span className="absolute w-2 h-2 bg-[#E86A33] rounded-full" style={{ top: '-3px', right: '90px' }}></span>
               </h1>
               <p className="text-gray-600 mt-2 text-lg">
                 Your journey to financial wisdom starts here
@@ -1567,7 +1567,7 @@ const LearnPage = () => {
                 className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:from-green-700 hover:to-emerald-700"
               >
                 <DollarSign className="w-5 h-5" />
-                <span className="font-bold">Build Corpus</span>
+                <span className="font-bold">Earn</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

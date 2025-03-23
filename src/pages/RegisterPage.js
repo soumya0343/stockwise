@@ -72,7 +72,12 @@ const RegisterPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Create Account</h1>
+          <h1 className="text-4xl font-bold relative mb-4">
+            <span className="text-black">stock</span>
+            <span className="text-[#E86A33]">wise</span>
+            <span className="absolute w-2 h-2 bg-[#E86A33] rounded-full" style={{ top: '-3px', right: '90px' }}></span>
+          </h1>
+          <h2 className="text-3xl font-bold text-black mb-2">Create Account</h2>
           <p className="text-gray-600">Join Stockwise to start your investment journey</p>
         </div>
 
