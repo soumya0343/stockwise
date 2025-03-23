@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield } from 'lucide-react';
+import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield, Rocket, Target, BarChart, Sparkles, Flag } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import './StockwiseOnboarding.css';
+import { motion } from 'framer-motion';
+
+// Add avatar image path
+const AVATAR_IMAGE = '/images/welcome_ready.png';
+const CHOOSE_GOAL_IMAGE = '/images/choose_goal.png';
+const EXCITED_AVATAR = '/images/excitedd.png';
 
 // Main App Component
 function StockwiseOnboarding() {
@@ -19,6 +25,9 @@ function StockwiseOnboarding() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState('next');
   const [selectedGoal, setSelectedGoal] = useState('car');
+  const [userName, setUserName] = useState('');
+  const [showNameInput, setShowNameInput] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   
   // Sample transaction data
   const transactions = [
@@ -221,23 +230,133 @@ function StockwiseOnboarding() {
 
   // Define all screens in the app
   const screens = [
-    // Screen 1: Welcome
+    // Screen 1: Welcome with Name Input
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto text-center py-8">
-          <h1 className="text-7xl font-bold mb-10">stock<span className="text-orange-600">wise</span></h1>
-          <p className="text-2xl mb-16 leading-relaxed">Ready to turn ₹100 into your dream car?<br/>Let's make it happen together!</p>
+        <div className="max-w-4xl mx-auto py-8">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-6xl font-bold">stock<span className="text-orange-600">wise</span></h1>
+          </motion.div>
           
-          <div className="mb-10 w-64 mx-auto">
-            <NeopopButton onClick={nextScreen} size="large">
-              Let's do this! <ChevronRight className="ml-2" />
-            </NeopopButton>
-          </div>
-          
-          <div className="flex justify-center">
-            <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
-              <span className="text-sm font-medium">Made for BITS Goa Hackathon 💪</span>
+          <div className="flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <div className="relative flex items-center" style={{ width: '900px' }}>
+                <motion.img
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  src={AVATAR_IMAGE}
+                  alt="Stockwise Avatar"
+                  className="w-[300px] h-[300px] object-cover"
+                  style={{ marginLeft: '40px' }}
+                />
+                {showNameInput && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="absolute left-[45%] top-[0%] bg-gradient-to-br from-white to-orange-50 px-10 py-8 rounded-[2rem] border-4 border-gray-800 shadow-[8px_8px_0px_rgba(31,41,55,0.8)]"
+                    style={{ 
+                      width: 'max-content',
+                      minWidth: '400px',
+                      transform: 'translateY(-50%)'
+                    }}
+                  >
+                    <div className="absolute left-[-16px] top-[50%] w-0 h-0" style={{
+                      transform: 'translateY(-50%)',
+                      borderTop: '12px solid transparent',
+                      borderBottom: '12px solid transparent',
+                      borderRight: '16px solid #1f2937'
+                    }}></div>
+                    <div className="absolute left-[-8px] top-[50%] w-0 h-0" style={{
+                      transform: 'translateY(-50%)',
+                      borderTop: '12px solid transparent',
+                      borderBottom: '12px solid transparent',
+                      borderRight: '16px solid #fff'
+                    }}></div>
+                    <p className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text text-center">Hi, I'm Stocky! What's your name?</p>
+                    <div className="flex flex-col items-center gap-4">
+                      <input
+                        type="text"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder="Enter your name"
+                        className="w-full px-6 py-4 border-3 border-gray-300 rounded-2xl focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-300 text-xl font-medium text-center shadow-inner"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && userName.trim()) {
+                            setShowNameInput(false);
+                            setShowWelcome(true);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (userName.trim()) {
+                            setShowNameInput(false);
+                            setShowWelcome(true);
+                          }
+                        }}
+                        className="w-full px-8 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 text-xl shadow-[4px_4px_0px_rgba(31,41,55,0.8)]"
+                      >
+                        That's My Name!
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+                {showWelcome && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="absolute left-[45%] top-[0%] bg-gradient-to-br from-white to-orange-50 px-10 py-8 rounded-[2rem] border-4 border-gray-800 shadow-[8px_8px_0px_rgba(31,41,55,0.8)]"
+                    style={{ 
+                      width: 'max-content',
+                      minWidth: '400px',
+                      transform: 'translateY(-50%)'
+                    }}
+                  >
+                    <div className="absolute left-[-16px] top-[50%] w-0 h-0" style={{
+                      transform: 'translateY(-50%)',
+                      borderTop: '12px solid transparent',
+                      borderBottom: '12px solid transparent',
+                      borderRight: '16px solid #1f2937'
+                    }}></div>
+                    <div className="absolute left-[-8px] top-[50%] w-0 h-0" style={{
+                      transform: 'translateY(-50%)',
+                      borderTop: '12px solid transparent',
+                      borderBottom: '12px solid transparent',
+                      borderRight: '16px solid #fff'
+                    }}></div>
+                    <p className="text-2xl font-bold leading-relaxed text-center">
+                      Nice to meet you, <span className="bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">{userName}</span>!<br/>Ready to start your investment journey?
+                    </p>
+                    <motion.button
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={nextScreen}
+                      className="w-full mt-6 px-8 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 text-xl shadow-[4px_4px_0px_rgba(31,41,55,0.8)] flex items-center justify-center"
+                    >
+                      Let's Begin! <ChevronRight className="ml-2" />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </div>
             </div>
+            
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex justify-center mt-8"
+            >
+              <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
+                <span className="text-sm font-medium">Made for BITS Goa Hackathon 💪</span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -246,10 +365,10 @@ function StockwiseOnboarding() {
     // Screen 2: Goal Selection
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto py-8">
-          <h2 className="text-4xl font-bold mb-12 text-center">What are you dreaming of, friend?</h2>
+        <div className="max-w-4xl mx-auto py-8">
+          <h2 className="text-4xl font-bold text-center mb-12">What are you dreaming of, friend?</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-48 mb-10 relative">
             {/* Dream Car Option */}
             <div 
               className={`relative overflow-hidden rounded-2xl border-4 ${hoverState === 'car' ? 'border-orange-500' : 'border-black'} transition-all duration-300 cursor-pointer`}
@@ -291,17 +410,6 @@ function StockwiseOnboarding() {
                 <p className="text-gray-600">Plan your perfect getaway through strategic investment planning.</p>
               </div>
             </div>
-
-            {/* Coming Soon Option */}
-            <div className="relative overflow-hidden rounded-2xl border-4 border-gray-300 opacity-60 cursor-not-allowed">
-              <div className="bg-white p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <TrendingUp className="w-12 h-12" />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">Coming Soon</h3>
-                <p className="text-gray-600">More exciting investment goals are on the way!</p>
-              </div>
-            </div>
           </div>
           
           <p className="text-center text-lg text-gray-600 max-w-xl mx-auto">
@@ -314,105 +422,115 @@ function StockwiseOnboarding() {
     // Screen 3: Goal Amount
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto py-8">
-          <h2 className="text-4xl font-bold mb-10 text-center">
-            {selectedGoal === 'car' ? 'Your Dream Car Details 🚙' : 'Your Dream Vacation Details ✈️'}
-          </h2>
-          
-          <div className="grid gap-8 mb-12">
-            {/* Details Card */}
-            <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-              <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  {selectedGoal === 'car' ? (
-                    <Car className="w-48 h-48 text-gray-800" />
-                  ) : (
-                    <Calendar className="w-48 h-48 text-gray-800" />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="text-3xl font-bold mb-2">{selectedGoal === 'car' ? 'Dream Car' : 'Dream Vacation'}</h3>
-                    <div className="space-y-2 text-gray-600">
+        <div className="max-w-5xl mx-auto py-8">
+          <div className="flex items-start gap-24">
+            <div className="flex-1">
+              <div className="grid gap-8">
+                {/* Details Card */}
+                <div className="relative border-4 border-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+                  <div className="w-full bg-gradient-to-br from-orange-100 to-orange-50 p-8">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
                       {selectedGoal === 'car' ? (
-                        <>
-                          <p>• Powerful Engine</p>
-                          <p>• Luxury Features</p>
-                          <p>• Premium Experience</p>
-                        </>
+                        <Car className="w-48 h-48 text-gray-800" />
                       ) : (
-                        <>
-                          <p>• Exotic Destinations</p>
-                          <p>• Luxury Accommodations</p>
-                          <p>• Unforgettable Experiences</p>
-                        </>
+                        <Calendar className="w-48 h-48 text-gray-800" />
                       )}
+                      <div className="flex-1">
+                        <h3 className="text-3xl font-bold mb-2">{selectedGoal === 'car' ? 'Dream Car' : 'Dream Vacation'}</h3>
+                        <div className="space-y-2 text-gray-600">
+                          {selectedGoal === 'car' ? (
+                            <>
+                              <p>• Powerful Engine</p>
+                              <p>• Luxury Features</p>
+                              <p>• Premium Experience</p>
+                            </>
+                          ) : (
+                            <>
+                              <p>• Exotic Destinations</p>
+                              <p>• Luxury Accommodations</p>
+                              <p>• Unforgettable Experiences</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Price Selection Section */}
+                <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-2xl font-bold">
+                      {selectedGoal === 'car' ? 'Set Your Dream Car Price' : 'Set Your Dream Vacation Budget'}
+                    </span>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-gray-600">Target:</span>
+                      <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
+                        {(amount/100000).toFixed(1)}L
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min={selectedGoal === 'car' ? 500000 : 100000}
+                        max={selectedGoal === 'car' ? 25000000 : 2000000}
+                        step={selectedGoal === 'car' ? 100000 : 50000}
+                        value={amount}
+                        onChange={(e) => setAmount(parseInt(e.target.value))}
+                        className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
+                                  focus:outline-none focus:ring-2 focus:ring-orange-600"
+                        style={{
+                          backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB 100%)`,
+                        }}
+                      />
+                      <div className="flex justify-between mt-4 text-sm font-medium">
+                        <div className="text-center">
+                          <div className="text-gray-500">Min {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹5L' : '₹1L'}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-gray-500">Max {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
+                          <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹2.5Cr' : '₹20L'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-600">
+                            {selectedGoal === 'car' ? 'Your Dream Car Price' : 'Your Dream Vacation Budget'}
+                          </div>
+                          <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Price Selection Section */}
-            <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-bold">
-                  {selectedGoal === 'car' ? 'Set Your Dream Car Price' : 'Set Your Dream Vacation Budget'}
-                </span>
-                <div className="flex items-center space-x-3">
-                  <span className="text-gray-600">Target:</span>
-                  <span className="text-2xl font-mono bg-orange-100 px-4 py-2 rounded-lg border-2 border-orange-200 font-bold text-orange-600">
-                    {(amount/100000).toFixed(1)}L
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="relative">
-                  <input
-                    type="range"
-                    min={selectedGoal === 'car' ? 500000 : 100000}
-                    max={selectedGoal === 'car' ? 25000000 : 2000000}
-                    step={selectedGoal === 'car' ? 100000 : 50000}
-                    value={amount}
-                    onChange={(e) => setAmount(parseInt(e.target.value))}
-                    className="w-full h-3 appearance-none bg-gray-200 rounded-full cursor-pointer 
-                              focus:outline-none focus:ring-2 focus:ring-orange-600"
-                    style={{
-                      backgroundImage: `linear-gradient(to right, #F97316 0%, #F97316 ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB ${((amount - (selectedGoal === 'car' ? 500000 : 100000)) / (selectedGoal === 'car' ? 24500000 : 1900000)) * 100}%, #E5E7EB 100%)`,
-                    }}
-                  />
-                  <div className="flex justify-between mt-4 text-sm font-medium">
-                    <div className="text-center">
-                      <div className="text-gray-500">Min {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
-                      <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹5L' : '₹1L'}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-gray-500">Max {selectedGoal === 'car' ? 'Price' : 'Budget'}</div>
-                      <div className="text-lg font-bold">{selectedGoal === 'car' ? '₹2.5Cr' : '₹20L'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-gray-600">
-                        {selectedGoal === 'car' ? 'Your Dream Car Price' : 'Your Dream Vacation Budget'}
-                      </div>
-                      <div className="text-lg font-bold text-orange-600">₹{(amount/100000).toFixed(1)}L</div>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex-shrink-0 flex flex-col items-center mt-32">
+              <motion.img
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                src={EXCITED_AVATAR}
+                alt="Excited Avatar"
+                className="w-[300px] h-[300px] object-cover mb-8"
+              />
+              <div className="flex flex-col items-center">
+                <NeopopButton onClick={nextScreen} primary className="mb-4">
+                  Let's check my spending! <ChevronRight className="ml-2" />
+                </NeopopButton>
+                <p className="text-gray-600 text-center">
+                  We'll help you save for your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'} through smart investments
+                </p>
               </div>
             </div>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <NeopopButton onClick={nextScreen} primary className="mb-4">
-              Let's check my spending! <ChevronRight className="ml-2" />
-            </NeopopButton>
-            <p className="text-gray-600 text-center">
-              We'll help you save for your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'} through smart investments
-            </p>
           </div>
         </div>
       </div>
@@ -619,7 +737,7 @@ function StockwiseOnboarding() {
               primary
               className="py-4 px-6 text-lg"
             >
-              Start Investing <ArrowRight className="ml-2 w-5 h-5" />
+              Start Learning <ArrowRight className="ml-2 w-5 h-5" />
             </NeopopButton>
           </div>
           
@@ -805,55 +923,208 @@ function StockwiseOnboarding() {
               </div>
             </div>
           </div>
-          
-          {/* Learning CTA Section */}
-          <div className="border-4 border-gray-800 rounded-xl bg-gradient-to-br from-orange-50 to-white p-8 text-center shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-            <h3 className="text-4xl font-bold mb-4">Ready to make this a reality? 🎯</h3>
-            <p className="text-xl text-gray-600 mb-8">
-              Your daily savings could grow into your {selectedGoal === 'car' ? 'dream car' : 'dream vacation'}. Let's learn how to make it happen!
-            </p>
-            <div className="flex flex-col items-center space-y-4">
-              <NeopopButton 
-                onClick={() => navigate('/learn')} 
-                primary
-                className="w-full max-w-md py-6 px-8 text-xl"
-              >
-                Start Learning Now <ArrowRight className="ml-2 w-6 h-6" />
-              </NeopopButton>
-              <p className="text-sm text-gray-500">
-                Free learning modules • No credit card required
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>,
+  ];
+
+  // Add this new StepIcon component
+  const StepIcon = ({ step, isActive, isCompleted }) => {
+    const icons = {
+      1: Rocket,
+      2: Target,
+      3: BarChart,
+      4: Sparkles,
+      5: Flag
+    };
+    
+    const Icon = icons[step];
+    return (
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ 
+          scale: isActive ? 1.1 : 1,
+          rotate: isCompleted ? 360 : 0
+        }}
+        transition={{ 
+          duration: 0.5,
+          rotate: { duration: 0.5 },
+          scale: { type: "spring", stiffness: 300 }
+        }}
+        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 relative ${
+          isActive 
+            ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg' 
+            : isCompleted
+              ? 'bg-gradient-to-br from-green-500 to-green-600 text-white'
+              : 'bg-gray-100 text-gray-400'
+        }`}
+      >
+        <Icon size={24} />
+        {isCompleted && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
+          >
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  };
+
+  // Update the RoadmapStep component
+  const RoadmapStep = ({ number, title, isActive, isCompleted }) => (
+    <motion.div 
+      initial={{ x: -50, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.5, delay: number * 0.1 }}
+      className="relative flex items-start mb-8 last:mb-0"
+    >
+      {/* Vertical line with animated gradient */}
+      {number < 5 && (
+        <div className="absolute left-6 top-12 bottom-0">
+          <motion.div 
+            initial={{ height: 0 }}
+            animate={{ height: '100%' }}
+            transition={{ duration: 0.5, delay: number * 0.2 }}
+            className={`w-1 rounded-full transition-all duration-500 ${
+              isCompleted 
+                ? 'bg-gradient-to-b from-green-500 via-orange-400 to-orange-500 animate-pulse'
+                : isActive
+                  ? 'bg-gradient-to-b from-gray-200 via-orange-300 to-gray-200 animate-pulse'
+                  : 'bg-gray-200'
+            }`}
+          >
+            {/* Animated dots */}
+            {isActive && (
+              <motion.div
+                initial={{ y: 0, opacity: 0 }}
+                animate={{ y: [0, 100], opacity: [0, 1, 0] }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full bg-orange-500"
+              />
+            )}
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Step content */}
+      <div className="flex items-start group">
+        {/* Icon */}
+        <div className="mr-4 z-10">
+          <StepIcon step={number} isActive={isActive} isCompleted={isCompleted} />
+        </div>
+        
+        {/* Step details */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: number * 0.15 }}
+          className="flex-1 transition-all duration-500"
+        >
+          <div className={`w-full min-w-[200px] h-[48px] flex items-center px-4 rounded-lg transition-all duration-500 ${
+            isActive 
+              ? 'bg-gradient-to-br from-orange-50 to-orange-100 shadow-lg border-2 border-orange-200 transform scale-105' 
+              : isCompleted
+                ? 'bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200'
+                : 'bg-gray-50 border-2 border-gray-200 group-hover:bg-gray-100 group-hover:transform group-hover:scale-105'
+          }`}>
+            <h3 className={`font-bold text-lg transition-colors duration-500 ${
+              isActive ? 'text-orange-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
+            }`}>
+              {title}
+            </h3>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+
+  // Define roadmap steps
+  const roadmapSteps = [
+    { title: "Welcome" },
+    { title: "Choose Your Goal" },
+    { title: "Set Your Target" },
+    { title: "Analyze Spending" },
+    { title: "Growth Projection" }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
       {currentScreen > 0 && <BackButton onClick={prevScreen} />}
       <div className="h-screen flex">
-        {/* Progress Steps - Moved to left side */}
-        <div className="fixed left-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4">
-          {screens.map((screen, index) => (
-            <div key={index} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentScreen === index ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
-                {index + 1}
-              </div>
-              {index < screens.length - 1 && (
-                <div className={`h-24 w-1 ml-4 ${
-                  currentScreen > index ? 'bg-orange-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Roadmap Side Panel */}
+        <motion.div 
+          initial={{ x: -320 }}
+          animate={{ x: 0 }}
+          transition={{ type: "spring", stiffness: 100 }}
+          className="fixed left-0 top-0 h-full w-[320px] bg-white/80 backdrop-blur-xl border-r-4 border-gray-800 p-8 shadow-[4px_0px_0px_rgba(31,41,55,0.8)] overflow-y-auto"
+        >
+          <div className="mb-12">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">
+                Your Journey
+              </h2>
+              <div className="h-1.5 w-32 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
+            </motion.div>
+          </div>
+          
+          <div className="space-y-2">
+            {roadmapSteps.map((step, index) => (
+              <RoadmapStep
+                key={index}
+                number={index + 1}
+                title={step.title}
+                isActive={currentScreen === index}
+                isCompleted={currentScreen > index}
+              />
+            ))}
+          </div>
 
-        {/* Step Content */}
-        <div className="flex-1 overflow-y-auto">
+          {/* Progress indicator */}
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="fixed bottom-8 left-8 right-8 max-w-[256px]"
+          >
+            <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-gray-200 shadow-lg">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-gray-600">Progress</span>
+                <motion.span 
+                  key={progressPercentage}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text"
+                >
+                  {Math.round(progressPercentage)}%
+                </motion.span>
+              </div>
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercentage}%` }}
+                  transition={{ duration: 0.5, type: "spring" }}
+                  className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Main Content - adjusted margin to account for side panel */}
+        <div className="flex-1 ml-[320px]">
           <div className="h-full">
             {screens[currentScreen]}
           </div>

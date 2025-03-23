@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const GamificationContext = createContext();
-
 export const LEVELS = {
-  1: { name: "Rookie Investor", xpRequired: 0 },
-  2: { name: "Smart Saver", xpRequired: 1000 },
-  3: { name: "Market Explorer", xpRequired: 2500 },
-  4: { name: "Portfolio Pro", xpRequired: 5000 },
-  5: { name: "Investment Guru", xpRequired: 10000 }
+  1: { name: 'Novice Investor', xpRequired: 0 },
+  2: { name: 'Growing Investor', xpRequired: 500 },
+  3: { name: 'Skilled Investor', xpRequired: 1200 },
+  4: { name: 'Expert Investor', xpRequired: 2000 },
+  5: { name: 'Master Investor', xpRequired: 3000 }
 };
 
 export const ACHIEVEMENTS = {
@@ -43,6 +41,8 @@ export const ACHIEVEMENTS = {
   }
 };
 
+const GamificationContext = createContext();
+
 export const useGamification = () => {
   const context = useContext(GamificationContext);
   if (!context) {
@@ -54,22 +54,32 @@ export const useGamification = () => {
 export const GamificationProvider = ({ children }) => {
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
-  const [dailyGoal, setDailyGoal] = useState(0);
+  const [dailyGoalProgress, setDailyGoalProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [achievements, setAchievements] = useState([]);
   const [completedChapters, setCompletedChapters] = useState(new Set());
+  const [lastCompletionDate, setLastCompletionDate] = useState(null);
 
   // Load saved state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('gamificationState');
     if (savedState) {
-      const { xp, level, dailyGoal, streak, achievements, completedChapters } = JSON.parse(savedState);
+      const { 
+        xp, 
+        level, 
+        dailyGoalProgress, 
+        streak, 
+        achievements, 
+        completedChapters,
+        lastCompletionDate 
+      } = JSON.parse(savedState);
       setXp(xp || 0);
       setLevel(level || 1);
-      setDailyGoal(dailyGoal || 0);
+      setDailyGoalProgress(dailyGoalProgress || 0);
       setStreak(streak || 0);
       setAchievements(achievements || []);
       setCompletedChapters(new Set(completedChapters || []));
+      setLastCompletionDate(lastCompletionDate);
     }
   }, []);
 
@@ -78,34 +88,89 @@ export const GamificationProvider = ({ children }) => {
     const state = {
       xp,
       level,
-      dailyGoal,
+      dailyGoalProgress,
       streak,
       achievements,
-      completedChapters: Array.from(completedChapters)
+      completedChapters: Array.from(completedChapters),
+      lastCompletionDate
     };
     localStorage.setItem('gamificationState', JSON.stringify(state));
-  }, [xp, level, dailyGoal, streak, achievements, completedChapters]);
+  }, [xp, level, dailyGoalProgress, streak, achievements, completedChapters, lastCompletionDate]);
+
+  // Check and reset daily progress at midnight
+  useEffect(() => {
+    const checkDate = () => {
+      const today = new Date().toDateString();
+      if (lastCompletionDate && lastCompletionDate !== today) {
+        setDailyGoalProgress(0);
+      }
+      setLastCompletionDate(today);
+    };
+
+    checkDate();
+    const interval = setInterval(checkDate, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [lastCompletionDate]);
+
+  const calculateLevel = (newXP) => {
+    let newLevel = 1;
+    for (let lvl = 5; lvl >= 1; lvl--) {
+      if (newXP >= LEVELS[lvl].xpRequired) {
+        newLevel = lvl;
+        break;
+      }
+    }
+    return newLevel;
+  };
 
   const addXP = (amount) => {
     setXp(prev => {
       const newXP = prev + amount;
-      // Level up logic (every 1000 XP)
-      const newLevel = Math.floor(newXP / 1000) + 1;
-      if (newLevel > level) {
+      const newLevel = calculateLevel(newXP);
+      
+      if (newLevel !== level) {
         setLevel(newLevel);
+        // Add bonus XP for leveling up
+        return newXP + 100;
       }
       return newXP;
     });
   };
 
   const completeChapter = (chapterId) => {
+    const today = new Date().toDateString();
+    
+    // Update completed chapters
     setCompletedChapters(prev => {
       const newSet = new Set(prev);
       newSet.add(chapterId);
       return newSet;
     });
-    addXP(100); // Award XP for completing a chapter
-    setDailyGoal(prev => Math.min(prev + 1, 5)); // Increment daily goal progress
+
+    // Add XP for chapter completion (base XP + streak bonus)
+    const baseXP = 100;
+    const streakBonus = Math.min(streak * 10, 50); // Max 50 XP bonus for streak
+    addXP(baseXP + streakBonus);
+
+    // Update daily goal progress (25% per chapter)
+    setDailyGoalProgress(prev => {
+      const newProgress = Math.min(prev + 25, 100);
+      if (newProgress === 100) {
+        addXP(200); // Bonus XP for completing daily goal
+      }
+      return newProgress;
+    });
+
+    // Update streak if it's a new day
+    if (today !== lastCompletionDate) {
+      setStreak(prev => prev + 1);
+      if (streak > 0 && streak % 7 === 0) {
+        addXP(500); // Bonus XP for weekly streak
+        unlockAchievement('WEEK_STREAK');
+      }
+    }
+
+    setLastCompletionDate(today);
   };
 
   const unlockAchievement = (achievementId) => {
@@ -115,30 +180,16 @@ export const GamificationProvider = ({ children }) => {
     }
   };
 
-  const incrementStreak = () => {
-    setStreak(prev => prev + 1);
-    // Award bonus XP for maintaining streak
-    if (streak > 0 && streak % 7 === 0) {
-      addXP(500); // Bonus XP for weekly streak
-    }
-  };
-
-  const resetDailyGoal = () => {
-    setDailyGoal(0);
-  };
-
   const value = {
     xp,
     level,
-    dailyGoal,
+    dailyGoalProgress,
     streak,
     achievements,
     completedChapters,
     addXP,
     completeChapter,
     unlockAchievement,
-    incrementStreak,
-    resetDailyGoal,
     isChapterCompleted: (chapterId) => completedChapters.has(chapterId)
   };
 
