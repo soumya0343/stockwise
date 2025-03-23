@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ShoppingBag, TrendingUp, ArrowRight, DollarSign, Trophy, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FinanceChatbot from '../components/FinanceChatbot';
@@ -7,6 +7,7 @@ import { useGamification } from '../contexts/GamificationContext';
 import { XPBar, StreakCounter, DailyGoalProgress, AchievementBadge } from '../components/GamificationElements';
 import { ACHIEVEMENTS } from '../contexts/GamificationContext';
 import StreakDisplay from '../components/StreakDisplay';
+import confetti from 'canvas-confetti';
 
 const LearnPage = () => {
   const [selectedModule, setSelectedModule] = useState(null);
@@ -31,6 +32,8 @@ const LearnPage = () => {
   const [submittedAnswers, setSubmittedAnswers] = useState({});
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAttempts, setQuizAttempts] = useState({});
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [currentMilestone, setCurrentMilestone] = useState(0);
 
   const { 
     addXP, 
@@ -90,6 +93,37 @@ const LearnPage = () => {
       unlockAchievement('WEEK_STREAK');
     }
   }, [completedChapters, chapterProgress, totalTokens, unlockAchievement]);
+
+  // Add this function to check for milestones
+  const checkMilestone = (progress) => {
+    const milestones = [0, 20, 40, 60, 80];
+    const newMilestone = milestones.find(m => progress >= m && progress < m + 20);
+    
+    console.log('Progress:', progress);
+    console.log('Current Milestone:', currentMilestone);
+    console.log('New Milestone:', newMilestone);
+    
+    if (newMilestone !== undefined && newMilestone !== currentMilestone) {
+      console.log('Setting new milestone:', newMilestone);
+      setCurrentMilestone(newMilestone);
+      setShowMilestone(true);
+      // Trigger confetti
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  };
+
+  // Add this effect to check for milestones when progress changes
+  useEffect(() => {
+    const progress = Math.round((modules.reduce((acc, module) => 
+      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+    ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100);
+    
+    checkMilestone(progress);
+  }, [completedChapters, currentMilestone]);
 
   // Chapter content mapping
   const chapterContent = {
@@ -1581,86 +1615,92 @@ const LearnPage = () => {
 
       {/* Courses Progress Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 p-8 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
+        <div className="bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-300 via-pink-300 to-red-300"></div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-300 via-blue-300 to-indigo-300"></div>
           
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <Star className="w-8 h-8 text-yellow-500 animate-pulse" />
-                <div className="absolute inset-0 w-8 h-8 bg-yellow-500 blur-sm -z-10"></div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="relative">
+                  <Star className="w-6 h-6 text-yellow-500 animate-pulse" />
+                  <div className="absolute inset-0 w-6 h-6 bg-yellow-500 blur-sm -z-10"></div>
+                </div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                  Course Progress
+                </h2>
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
-                Course Progress
-              </h2>
-            </div>
-            <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
-              <span className="font-bold text-green-600 text-lg">{modules.reduce((acc, module) => 
-                acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-              )}</span>
-              <span className="text-gray-400">/</span>
-              <span className="font-medium text-gray-600">{modules.reduce((acc, module) => acc + module.chapters.length, 0)} Chapters</span>
-            </div>
-          </div>
 
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
-            <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-8 overflow-hidden border-2 border-gray-800">
-              <div 
-                className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
-                style={{ 
-                  width: `${(modules.reduce((acc, module) => 
-                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
-                }}
-              >
-                <div className="absolute inset-0 overflow-hidden opacity-75">
-                  <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className="h-8 w-4 bg-white/20 -skew-x-[40deg] mx-2" />
-                    ))}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
+                <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-6 overflow-hidden border-2 border-gray-800">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
+                    style={{ 
+                      width: `${(modules.reduce((acc, module) => 
+                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
+                    }}
+                  >
+                    <div className="absolute inset-0 overflow-hidden opacity-75">
+                      <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
+                        {[...Array(10)].map((_, i) => (
+                          <div key={i} className="h-6 w-3 bg-white/20 -skew-x-[40deg] mx-2" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
+                  style={{ 
+                    left: `${Math.min(Math.max((modules.reduce((acc, module) => 
+                      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                    ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
+                  }}
+                >
+                  <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
+                    <span className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
+                      {Math.round((modules.reduce((acc, module) => 
+                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
-            <div 
-              className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
-              style={{ 
-                left: `${Math.min(Math.max((modules.reduce((acc, module) => 
-                  acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
-              }}
-            >
-              <div className="bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
-                <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
-                  {Math.round((modules.reduce((acc, module) => 
-                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
-                </span>
+
+              <div className="flex justify-between items-center mt-2">
+                <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
+                  <span className="text-sm font-medium">Completed:</span>
+                  <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+                    {modules.reduce((acc, module) => 
+                      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                    )} chapters
+                  </span>
+                </div>
+                <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
+                  <span className="text-sm font-medium">Remaining:</span>
+                  <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                    {modules.reduce((acc, module) => 
+                      acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
+                    )} chapters
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-between items-center">
-            <div className="flex items-center bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
-              <span className="font-medium">Completed:</span>
-              <span className="ml-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
-                {modules.reduce((acc, module) => 
+            {/* Avatar Section */}
+            <div className="ml-8">
+              <img 
+                src={`/images/${Math.min(Math.floor((modules.reduce((acc, module) => 
                   acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                )} chapters
-              </span>
-            </div>
-            <div className="flex items-center bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-gray-800">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
-              <span className="font-medium">Remaining:</span>
-              <span className="ml-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
-                {modules.reduce((acc, module) => 
-                  acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
-                )} chapters
-              </span>
+                ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100 / 20) + 1, 5)}.png`}
+                alt="Progress Avatar"
+                className="w-[200px] h-[200px] object-cover rounded-full border-4 border-gray-800 shadow-lg"
+              />
             </div>
           </div>
 
@@ -1901,6 +1941,71 @@ const LearnPage = () => {
           </div>
         </div>
       )}
+
+      {/* Milestone Popup */}
+      <AnimatePresence>
+        {showMilestone && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => setShowMilestone(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowMilestone(false)}
+              >
+                ✕
+              </button>
+              
+              <div className="flex flex-col items-center">
+                <motion.img
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  src={`/images/${currentMilestone / 20 + 1}.png`}
+                  alt={`Milestone ${currentMilestone / 20 + 1}`}
+                  className="w-64 h-64 object-contain mb-6"
+                />
+                
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent"
+                >
+                  Congratulations! 🎉
+                </motion.h2>
+                
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xl text-center text-gray-600 mb-6"
+                >
+                  You've reached {currentMilestone}% of your learning journey!
+                </motion.p>
+                
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-orange-50 p-4 rounded-lg text-center"
+                >
+                  <p className="text-orange-800 font-medium">
+                    Keep up the great work! Your dedication to learning is impressive.
+                  </p>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Finance Chatbot */}
       <FinanceChatbot />
