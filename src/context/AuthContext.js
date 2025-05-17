@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
+// Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -10,55 +11,81 @@ const api = axios.create({
   }
 });
 
-// Add token to requests if it exists
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
+// Create auth context
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Add auth token to requests
+  api.interceptors.request.use(
+    (config) => {
+      const token = sessionStorage.getItem('token'); // Using sessionStorage instead of localStorage
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Handle response errors
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        logout();
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  const loadUser = useCallback(async (token) => {
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      sessionStorage.removeItem('token');
+      setError('Session expired. Please login again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Check auth status on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       loadUser(token);
     } else {
       setLoading(false);
     }
-  }, []);
-
-  const loadUser = async (token) => {
-    try {
-      const response = await api.get('/auth/me');
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error loading user:', error);
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadUser]);
 
   const register = async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
       const { token, user: newUser } = response.data;
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
       setUser(newUser);
+      setError(null);
       return newUser;
     } catch (error) {
-      console.error('Registration error:', error);
+      setError(error.response?.data?.message || 'Registration failed');
       throw error;
     }
   };
@@ -67,27 +94,30 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/auth/login', credentials);
       const { token, user: loggedInUser } = response.data;
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
       setUser(loggedInUser);
+      setError(null);
       return loggedInUser;
     } catch (error) {
-      console.error('Login error:', error);
+      setError(error.response?.data?.message || 'Login failed');
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = useCallback(() => {
+    sessionStorage.removeItem('token');
     setUser(null);
-  };
+    setError(null);
+  }, []);
 
   const updateUserProfile = async (profileData) => {
     try {
       const response = await api.put('/user/profile', profileData);
       setUser(response.data);
+      setError(null);
       return response.data;
     } catch (error) {
-      console.error('Profile update error:', error);
+      setError(error.response?.data?.message || 'Profile update failed');
       throw error;
     }
   };
@@ -96,9 +126,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.put('/user/stats', statsData);
       setUser(response.data);
+      setError(null);
       return response.data;
     } catch (error) {
-      console.error('Stats update error:', error);
+      setError(error.response?.data?.message || 'Stats update failed');
       throw error;
     }
   };
@@ -106,11 +137,13 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    error,
     register,
     login,
     logout,
     updateUserProfile,
-    updateUserStats
+    updateUserStats,
+    isAuthenticated: !!user
   };
 
   return (
@@ -118,4 +151,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

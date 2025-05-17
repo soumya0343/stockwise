@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, CheckCircle, Star, TrendingUp, BookOpen, BarChart, Award, Gift, User, Mail, Lock } from 'lucide-react';
+import { api } from './utils/api';
 
 // Constants
 const CHARACTERS = [
@@ -240,15 +241,107 @@ const OnboardingPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      setFormSubmitted(true);
-      // Here you would typically make an API call to save the data
-      setTimeout(() => {
-        goToNextStep();
-      }, 1000);
+  const handleSubmit = async () => {
+  if (validateForm()) {
+    setFormSubmitted(true);
+    try {
+      const response = await api.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        investmentLevel: formData.investmentLevel,
+        riskTolerance: formData.riskTolerance,
+        characterSelected: formData.characterSelected,
+        goals: formData.goals
+      });
+      
+      // Store auth token
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Update application state
+      setStats({
+        xp: response.user.stats.xp,
+        streak: response.user.stats.streak
+      });
+
+      // Navigate to next step
+      goToNextStep();
+    } catch (error) {
+      setErrors({
+        ...errors,
+        submit: error.message || 'Registration failed'
+      });
+      setFormSubmitted(false);
     }
-  };
+  }
+};
+
+// Add navigation guard
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // If user is already logged in, redirect to dashboard
+    setStep(8);
+  }
+}, []);
+
+// Update the final step to handle proper navigation
+const handleStartLearning = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    setStep(7); // Go to login if not authenticated
+  } else {
+    window.location.href = '/dashboard'; // Navigate to dashboard if authenticated
+  }
+};
+
+  const handleLogin = async () => {
+        if (!formData.email || !formData.password) {
+            setErrors({ submit: 'Please fill in all fields' });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await api.auth.login(formData.email, formData.password);
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            setStep(8); // Go to dashboard
+        } catch (error) {
+            setErrors({
+                ...errors,
+                submit: error.message || 'Login failed. Please try again.'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async () => {
+        if (!validateForm()) return;
+
+        setLoading(true);
+        try {
+            const response = await api.auth.register({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
+            });
+            
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            goToNextStep();
+        } catch (error) {
+            setErrors({
+                ...errors,
+                submit: error.message || 'Registration failed. Please try again.'
+            });
+        } finally {
+            setLoading(false);
+            setFormSubmitted(false);
+        }
+    };
 
   const renderStep = () => {
     switch (step) {
@@ -600,64 +693,92 @@ const OnboardingPage = () => {
 
       case 7: // Login
         return (
-          <div className="flex flex-col items-center space-y-6">
-            <h2 className="text-2xl font-semibold">Welcome back!</h2>
-            <p className="text-gray-600">Log in to continue your investment journey</p>
-            <div className="w-full max-w-md space-y-4">
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => updateFormData('email', e.target.value)}
-                    className="pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Your email"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => updateFormData('password', e.target.value)}
-                    className="pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Your password"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
-                    Remember me
-                  </label>
-                </div>
-                <button className="text-sm text-indigo-600 hover:text-indigo-800">
-                  Forgot password?
-                </button>
-              </div>
+            <div className="flex flex-col items-center space-y-6">
+                <h2 className="text-2xl font-semibold text-center text-gray-800">Welcome back!</h2>
+                <p className="text-gray-600 text-center">Log in to continue your investment journey</p>
+                <form 
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleLogin();
+                    }} 
+                    className="w-full max-w-md space-y-4"
+                >
+                    <InputField
+                        label="Email"
+                        icon={<Mail className="h-5 w-5" />}
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => updateFormData('email', e.target.value)}
+                        placeholder="Your email"
+                        error={errors.email}
+                    />
+                    <InputField
+                        label="Password"
+                        icon={<Lock className="h-5 w-5" />}
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => updateFormData('password', e.target.value)}
+                        placeholder="Your password"
+                        error={errors.password}
+                    />
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                            <input
+                                id="remember-me"
+                                type="checkbox"
+                                className="h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                            />
+                            <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
+                                Remember me
+                            </label>
+                        </div>
+                        <button 
+                            type="button"
+                            className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                        >
+                            Forgot password?
+                        </button>
+                    </div>
+
+                    {errors.submit && (
+                        <div className="w-full bg-red-50 p-3 rounded-lg">
+                            <p className="text-sm text-red-600">{errors.submit}</p>
+                        </div>
+                    )}
+
+                    <Button
+                        type="submit"
+                        disabled={loading || !formData.email || !formData.password}
+                        className="w-full py-3 bg-amber-600 hover:bg-amber-700"
+                    >
+                        {loading ? (
+                            <div className="flex items-center justify-center">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Logging in...
+                            </div>
+                        ) : (
+                            'Log In'
+                        )}
+                    </Button>
+                </form>
+
+                <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 w-full max-w-md">
+                    <div className="flex items-center gap-2">
+                        <Gift className="text-amber-500" />
+                        <span className="text-amber-800">First time here?</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                        Create an account to start your investment journey and unlock special rewards.
+                    </p>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setStep(1)}
+                        className="mt-3 w-full border-amber-200 text-amber-700 hover:bg-amber-50"
+                    >
+                        Sign up now
+                    </Button>
+                </Card>
             </div>
-            <button
-              onClick={() => setStep(8)} // Go to Dashboard
-              className="w-full max-w-md py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700"
-            >
-              Log In
-            </button>
-            <div className="text-center">
-              <p className="text-gray-600">
-                Don't have an account? <button className="text-indigo-600 font-medium" onClick={() => setStep(1)}>Sign up</button>
-              </p>
-            </div>
-          </div>
         );
 
       case 8: // Dashboard preview
