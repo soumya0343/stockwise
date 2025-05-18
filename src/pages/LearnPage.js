@@ -8,32 +8,23 @@ import { XPBar, StreakCounter, DailyGoalProgress, AchievementBadge } from '../co
 import { ACHIEVEMENTS } from '../contexts/GamificationContext';
 import StreakDisplay from '../components/StreakDisplay';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const LearnPage = () => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
-  const [completedChapters, setCompletedChapters] = useState(() => {
-    // Load completed chapters from localStorage on component mount
-    const saved = localStorage.getItem('completedChapters');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
+  const [completedChapters, setCompletedChapters] = useState(new Set());
   const [showChapterContent, setShowChapterContent] = useState(false);
-  const [chapterProgress, setChapterProgress] = useState(() => {
-    // Load chapter progress from localStorage on component mount
-    const saved = localStorage.getItem('chapterProgress');
-    return saved ? JSON.parse(saved) : {};
-  });
-  const [totalTokens, setTotalTokens] = useState(() => {
-    // Load total tokens from localStorage on component mount
-    const saved = localStorage.getItem('totalTokens');
-    return saved ? parseInt(saved) : 0;
-  });
+  const [chapterProgress, setChapterProgress] = useState({});
+  const [totalTokens, setTotalTokens] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [submittedAnswers, setSubmittedAnswers] = useState({});
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAttempts, setQuizAttempts] = useState({});
   const [showMilestone, setShowMilestone] = useState(false);
   const [currentMilestone, setCurrentMilestone] = useState(0);
+  const { user, logout } = useAuth();
 
   const { 
     addXP, 
@@ -42,56 +33,95 @@ const LearnPage = () => {
     achievements 
   } = useGamification();
 
-  // Save progress whenever completedChapters changes
+  // Load user progress from database
   useEffect(() => {
-    localStorage.setItem('completedChapters', JSON.stringify([...completedChapters]));
-  }, [completedChapters]);
+    const fetchUserProgress = async () => {
+      try {
+        const response = await axios.get('/api/user/progress');
+        const { completedChapters, chapterProgress, totalTokens } = response.data;
+        setCompletedChapters(new Set(completedChapters));
+        setChapterProgress(chapterProgress);
+        setTotalTokens(totalTokens);
+      } catch (error) {
+        console.error('Error fetching user progress:', error);
+      }
+    };
 
-  // Save progress whenever chapterProgress changes
-  useEffect(() => {
-    localStorage.setItem('chapterProgress', JSON.stringify(chapterProgress));
-  }, [chapterProgress]);
-
-  // Save progress whenever totalTokens changes
-  useEffect(() => {
-    localStorage.setItem('totalTokens', totalTokens.toString());
-  }, [totalTokens]);
-
-  // Update the useEffect for streak check
-  useEffect(() => {
-    const savedStreak = parseInt(localStorage.getItem('streak') || '0');
-    if (savedStreak !== 6) { // Set initial streak to 6
-      localStorage.setItem('streak', '6');
-      // Add 50 tokens for the streak
-      const streakTokens = 50;
-      setTotalTokens(prev => prev + streakTokens);
-      localStorage.setItem('totalTokens', (totalTokens + streakTokens).toString());
-    }
+    fetchUserProgress();
   }, []);
 
-  // Add effect to check achievements on mount and when completedChapters changes
+  // Save progress to database whenever completedChapters changes
   useEffect(() => {
-    // Check First Lesson Achievement
+    const saveProgress = async () => {
+      try {
+        await axios.post('/api/user/progress', {
+          completedChapters: Array.from(completedChapters),
+          chapterProgress,
+          totalTokens
+        });
+      } catch (error) {
+        console.error('Error saving progress:', error);
+      }
+    };
+
     if (completedChapters.size > 0) {
-      unlockAchievement('FIRST_LESSON');
+      saveProgress();
     }
+  }, [completedChapters, chapterProgress, totalTokens]);
 
-    // Check Perfect Quiz Achievement
-    const hasCompletedPerfectQuiz = Object.values(chapterProgress).some(progress => progress === 100);
-    if (hasCompletedPerfectQuiz) {
-      unlockAchievement('PERFECT_QUIZ');
-    }
+  // Update streak in database
+  useEffect(() => {
+    const updateStreak = async () => {
+      try {
+        const response = await axios.get('/api/user/stats');
+        const currentStreak = response.data.streak || 0;
+        
+        if (currentStreak !== 6) {
+          await axios.post('/api/user/update-streak', { streak: 6 });
+          // Add 50 tokens for the streak
+          const streakTokens = 50;
+          setTotalTokens(prev => prev + streakTokens);
+        }
+      } catch (error) {
+        console.error('Error updating streak:', error);
+      }
+    };
 
-    // Check Token Master Achievement
-    if (totalTokens >= 1000) {
-      unlockAchievement('TOKEN_MASTER');
-    }
+    updateStreak();
+  }, []);
 
-    // Check Week Streak Achievement
-    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    if (currentStreak >= 7) {
-      unlockAchievement('WEEK_STREAK');
-    }
+  // Check achievements
+  useEffect(() => {
+    const checkAchievements = async () => {
+      try {
+        // Check First Lesson Achievement
+        if (completedChapters.size > 0) {
+          await unlockAchievement('FIRST_LESSON');
+        }
+
+        // Check Perfect Quiz Achievement
+        const hasCompletedPerfectQuiz = Object.values(chapterProgress).some(progress => progress === 100);
+        if (hasCompletedPerfectQuiz) {
+          await unlockAchievement('PERFECT_QUIZ');
+        }
+
+        // Check Token Master Achievement
+        if (totalTokens >= 1000) {
+          await unlockAchievement('TOKEN_MASTER');
+        }
+
+        // Check Week Streak Achievement
+        const response = await axios.get('/api/user/stats');
+        const currentStreak = response.data.streak || 0;
+        if (currentStreak >= 7) {
+          await unlockAchievement('WEEK_STREAK');
+        }
+      } catch (error) {
+        console.error('Error checking achievements:', error);
+      }
+    };
+
+    checkAchievements();
   }, [completedChapters, chapterProgress, totalTokens, unlockAchievement]);
 
   // Add this function to check for milestones
@@ -1531,483 +1561,544 @@ const LearnPage = () => {
           }
         `}
       </style>
-      
-      {/* Header */}
-      <div className="bg-white border-b-4 border-gray-800 py-8 mb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col">
-              <h1 className="text-4xl font-bold">
-                <span className="text-black">stock</span>
-                <span className="text-[#E86A33]">wise</span>
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Your journey to financial wisdom starts here
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/store"
-                className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-50"
-              >
-                <ShoppingBag className="w-5 h-5" />
-                <span className="font-bold">Redeem Reward Tokens</span>
-              </Link>
-              <Link
-                to="/invest"
-                className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-900"
-              >
-                <TrendingUp className="w-5 h-5" />
-                <span className="font-bold">Invest Now</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/build-corpus"
-                className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:from-green-700 hover:to-emerald-700"
-              >
-                <DollarSign className="w-5 h-5" />
-                <span className="font-bold">Earn</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Gamification Stats Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="h-full">
-            <XPBar />
+      {/* Sidebar */}
+      <div className="fixed right-0 top-0 h-screen w-80 bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50 border-l-4 border-gray-800 shadow-lg p-8 flex flex-col">
+        <div className="flex-1">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-800">Welcome back,</h2>
+            <h2 className="text-3xl font-bold text-[#E86A33]">{user?.name || 'Investor'}!</h2>
+            <p className="text-gray-600 mt-4 text-lg">How's your learning journey going?</p>
           </div>
-          <div className="h-full">
-            <DailyGoalProgress />
-          </div>
-          <div className="h-full">
-            <StreakDisplay />
-          </div>
-        </div>
-      </div>
-
-      {/* Achievements Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-          <h2 className="text-2xl font-bold mb-4 flex items-center">
-            <Trophy className="w-6 h-6 mr-2" />
-            Achievements
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {Object.entries(ACHIEVEMENTS).map(([id, achievement]) => (
-              <div key={id} className="relative group">
-                <AchievementBadge
-                  achievement={achievement}
-                  unlocked={achievements.includes(id)}
-                />
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-2 left-1/2 transform -translate-x-1/2 translate-y-full bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                  {getAchievementProgress(id)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Courses Progress Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-300 via-pink-300 to-red-300"></div>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-300 via-blue-300 to-indigo-300"></div>
           
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="relative">
-                  <Star className="w-6 h-6 text-yellow-500 animate-pulse" />
-                  <div className="absolute inset-0 w-6 h-6 bg-yellow-500 blur-sm -z-10"></div>
-                </div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
-                  Course Progress
-                </h2>
-              </div>
-
+          <div className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+              <h3 className="font-bold text-xl text-gray-800 mb-2">Your Progress</h3>
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
-                <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-6 overflow-hidden border-2 border-gray-800">
+                <div className="w-full bg-gray-200 rounded-full h-4">
                   <div 
-                    className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-4 rounded-full transition-all duration-500"
                     style={{ 
-                      width: `${(modules.reduce((acc, module) => 
+                      width: `${Math.round((modules.reduce((acc, module) => 
                         acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
+                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%` 
                     }}
-                  >
-                    <div className="absolute inset-0 overflow-hidden opacity-75">
-                      <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
-                        {[...Array(10)].map((_, i) => (
-                          <div key={i} className="h-6 w-3 bg-white/20 -skew-x-[40deg] mx-2" />
-                        ))}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-600 mt-2 text-right">
+                  {Math.round((modules.reduce((acc, module) => 
+                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}% Complete
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+              <h3 className="font-bold text-xl text-gray-800 mb-2">Tokens Earned</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <span className="text-yellow-600 font-bold">🪙</span>
+                </div>
+                <span className="text-2xl font-bold text-gray-800">{totalTokens}</span>
+                <span className="text-gray-600">tokens</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            logout();
+            window.location.href = '/';
+          }}
+          className="w-full px-6 py-4 bg-[#E86A33] text-white rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] hover:bg-[#d55a23] transition-all duration-200 flex items-center justify-center space-x-3 mt-auto font-bold text-lg"
+        >
+          <span>Logout</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v3a1 1 0 102 0V9z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Main Content - Add right margin to account for sidebar */}
+      <div className="mr-80">
+        {/* Header */}
+        <div className="bg-white border-b-4 border-gray-800 py-8 mb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col">
+                <h1 className="text-4xl font-bold">
+                  <span className="text-black">stock</span>
+                  <span className="text-[#E86A33]">wise</span>
+                </h1>
+                <p className="text-gray-600 mt-2 text-lg">
+                  Your journey to financial wisdom starts here
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/store"
+                  className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-50"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  <span className="font-bold">Redeem Reward Tokens</span>
+                </Link>
+                <Link
+                  to="/invest"
+                  className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:bg-gray-900"
+                >
+                  <TrendingUp className="w-5 h-5" />
+                  <span className="font-bold">Invest Now</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/build-corpus"
+                  className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200 hover:from-green-700 hover:to-emerald-700"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  <span className="font-bold">Earn</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Gamification Stats Bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-full">
+              <XPBar />
+            </div>
+            <div className="h-full">
+              <DailyGoalProgress />
+            </div>
+            <div className="h-full">
+              <StreakDisplay />
+            </div>
+          </div>
+        </div>
+
+        {/* Achievements Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
+            <h2 className="text-2xl font-bold mb-4 flex items-center">
+              <Trophy className="w-6 h-6 mr-2" />
+              Achievements
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              {Object.entries(ACHIEVEMENTS).map(([id, achievement]) => (
+                <div key={id} className="relative group">
+                  <AchievementBadge
+                    achievement={achievement}
+                    unlocked={achievements.includes(id)}
+                  />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-2 left-1/2 transform -translate-x-1/2 translate-y-full bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                    {getAchievementProgress(id)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Courses Progress Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-300 via-pink-300 to-red-300"></div>
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-300 via-blue-300 to-indigo-300"></div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="relative">
+                    <Star className="w-6 h-6 text-yellow-500 animate-pulse" />
+                    <div className="absolute inset-0 w-6 h-6 bg-yellow-500 blur-sm -z-10"></div>
+                  </div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                    Course Progress
+                  </h2>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
+                  <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-6 overflow-hidden border-2 border-gray-800">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
+                      style={{ 
+                        width: `${(modules.reduce((acc, module) => 
+                          acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                        ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
+                      }}
+                    >
+                      <div className="absolute inset-0 overflow-hidden opacity-75">
+                        <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
+                          {[...Array(10)].map((_, i) => (
+                            <div key={i} className="h-6 w-3 bg-white/20 -skew-x-[40deg] mx-2" />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
-                  style={{ 
-                    left: `${Math.min(Math.max((modules.reduce((acc, module) => 
-                      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                    ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
-                  }}
-                >
-                  <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
-                    <span className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
-                      {Math.round((modules.reduce((acc, module) => 
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
+                    style={{ 
+                      left: `${Math.min(Math.max((modules.reduce((acc, module) => 
                         acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
+                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
+                    }}
+                  >
+                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
+                      <span className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
+                        {Math.round((modules.reduce((acc, module) => 
+                          acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                        ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
+                    <span className="text-sm font-medium">Completed:</span>
+                    <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+                      {modules.reduce((acc, module) => 
+                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                      )} chapters
+                    </span>
+                  </div>
+                  <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
+                    <span className="text-sm font-medium">Remaining:</span>
+                    <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                      {modules.reduce((acc, module) => 
+                        acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
+                      )} chapters
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-2">
-                <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
-                  <span className="text-sm font-medium">Completed:</span>
-                  <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
-                    {modules.reduce((acc, module) => 
-                      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                    )} chapters
-                  </span>
-                </div>
-                <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
-                  <span className="text-sm font-medium">Remaining:</span>
-                  <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
-                    {modules.reduce((acc, module) => 
-                      acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
-                    )} chapters
-                  </span>
-                </div>
+              {/* Avatar Section */}
+              <div className="ml-8">
+                <img 
+                  src={`/images/${Math.min(Math.floor((modules.reduce((acc, module) => 
+                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
+                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100 / 20) + 1, 5)}.png`}
+                  alt="Progress Avatar"
+                  className="w-[200px] h-[200px] object-cover rounded-full border-4 border-gray-800 shadow-lg"
+                />
               </div>
             </div>
 
-            {/* Avatar Section */}
-            <div className="ml-8">
-              <img 
-                src={`/images/${Math.min(Math.floor((modules.reduce((acc, module) => 
-                  acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100 / 20) + 1, 5)}.png`}
-                alt="Progress Avatar"
-                className="w-[200px] h-[200px] object-cover rounded-full border-4 border-gray-800 shadow-lg"
-              />
-            </div>
+            <style>
+              {`
+                @keyframes move-right-to-left {
+                  from { transform: translateX(0); }
+                  to { transform: translateX(-50px); }
+                }
+              `}
+            </style>
           </div>
-
-          <style>
-            {`
-              @keyframes move-right-to-left {
-                from { transform: translateX(0); }
-                to { transform: translateX(-50px); }
-              }
-            `}
-          </style>
         </div>
-      </div>
 
-      {/* Learning Modules */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((module) => (
-            <motion.div
-              key={module.id}
-              whileHover={{ scale: 1.02 }}
-              className={`${module.color} p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200`}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-bold">{module.title}</h2>
-                <div className="flex items-center">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  <span className="ml-1 font-bold">
-                    {module.chapters.filter(chapter => isChapterCompleted(module.id, chapter)).length} / {module.chapters.length}
-                  </span>
-                </div>
-              </div>
-              <p className="text-gray-600 mb-4">{module.description}</p>
-              <div className="text-sm text-gray-500 mb-4">{module.duration}</div>
-              <div className="space-y-2">
-                {module.chapters.map((chapter, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleChapterClick(module.id, chapter)}
-                    className={getChapterButtonClasses(module.id, chapter)}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{chapter}</div>
-                      {isChapterCompleted(module.id, chapter) && (
-                        <div className="text-sm text-green-600">
-                          {chapterProgress[chapter]}% Complete
-                        </div>
-                      )}
-                    </div>
-                    {isChapterCompleted(module.id, chapter) && (
-                      <Check className="w-5 h-5 text-green-500" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Chapter Content Modal */}
-      {showChapterContent && selectedChapter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-black">{selectedChapter}</h2>
-              <button 
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => {
-                  setShowChapterContent(false);
-                  setShowQuiz(false);
-                  setQuizAnswers({});
-                  setSubmittedAnswers({});
-                  setQuizAttempts({});
-                }}
+        {/* Learning Modules */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {modules.map((module) => (
+              <motion.div
+                key={module.id}
+                whileHover={{ scale: 1.02 }}
+                className={`${module.color} p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200`}
               >
-                ✕
-              </button>
-            </div>
-
-            {chapterContent[selectedChapter] && (
-              <div className="space-y-8">
-                {!showQuiz ? (
-                  <>
-                    {/* Introduction */}
-                    <div className="bg-orange-50 p-4 rounded-lg">
-                      <p className="text-lg text-gray-700">{chapterContent[selectedChapter].introduction}</p>
-                    </div>
-
-                    {/* Sections */}
-                    {chapterContent[selectedChapter].sections.map((section, index) => (
-                      <div key={index} className="border-b pb-6">
-                        <h3 className="text-xl font-semibold mb-4 text-black">{section.title}</h3>
-                        <p className="text-gray-700 mb-4">{section.content}</p>
-                        <div className="bg-orange-50 p-4 rounded-lg">
-                          <h4 className="font-semibold mb-2 text-black">Key Points:</h4>
-                          <ul className="list-disc pl-5 space-y-2">
-                            {section.keyPoints.map((point, i) => (
-                              <li key={i} className="text-gray-700">{point}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Start Quiz Button */}
-                    <div className="flex justify-center pt-4">
-                      <button
-                        className="bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
-                        onClick={() => setShowQuiz(true)}
-                      >
-                        <span>Start Knowledge Check</span>
-                        <span className="text-xl">📝</span>
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Quiz Header */}
-                    <div className="bg-orange-50 p-6 rounded-lg">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-semibold text-black">Knowledge Check</h3>
-                        <button
-                          className="text-orange-600 hover:text-orange-800 text-sm flex items-center space-x-2"
-                          onClick={() => {
-                            if (window.confirm('Going back will reset your quiz progress. Are you sure?')) {
-                              setShowQuiz(false);
-                              setQuizAnswers({});
-                              setSubmittedAnswers({});
-                              setQuizAttempts({});
-                            }
-                          }}
-                        >
-                          <span>← Back to Material</span>
-                        </button>
-                      </div>
-
-                      {/* Quiz Questions */}
-                      {chapterContent[selectedChapter].quiz.map((quizItem, questionIndex) => (
-                        <div key={questionIndex} className="space-y-4 mb-8">
-                          <div className="flex justify-between items-center">
-                            <p className="font-medium text-black">{quizItem.question}</p>
-                            {quizAttempts[questionIndex] > 0 && (
-                              <span className="text-sm text-gray-500">
-                                Attempts: {quizAttempts[questionIndex]}
-                              </span>
-                            )}
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-bold">{module.title}</h2>
+                  <div className="flex items-center">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    <span className="ml-1 font-bold">
+                      {module.chapters.filter(chapter => isChapterCompleted(module.id, chapter)).length} / {module.chapters.length}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-4">{module.description}</p>
+                <div className="text-sm text-gray-500 mb-4">{module.duration}</div>
+                <div className="space-y-2">
+                  {module.chapters.map((chapter, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleChapterClick(module.id, chapter)}
+                      className={getChapterButtonClasses(module.id, chapter)}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{chapter}</div>
+                        {isChapterCompleted(module.id, chapter) && (
+                          <div className="text-sm text-green-600">
+                            {chapterProgress[chapter]}% Complete
                           </div>
-                          <div className="space-y-2">
-                            {quizItem.options.map((option, optionIndex) => (
-                              <button
-                                key={optionIndex}
-                                className={getAnswerButtonClass(questionIndex, optionIndex, quizItem.correct)}
-                                onClick={() => !submittedAnswers[questionIndex] && handleAnswerSelect(questionIndex, optionIndex)}
-                                disabled={submittedAnswers[questionIndex]}
-                              >
-                                {option}
-                              </button>
-                            ))}
-                          </div>
-                          <div className="mt-4">
-                            {!submittedAnswers[questionIndex] ? (
-                              <button
-                                className={`px-4 py-2 rounded-lg ${
-                                  quizAnswers[questionIndex] !== undefined
-                                    ? 'bg-black text-white hover:bg-gray-800'
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                }`}
-                                onClick={() => quizAnswers[questionIndex] !== undefined && handleQuizSubmit(questionIndex)}
-                                disabled={quizAnswers[questionIndex] === undefined}
-                              >
-                                {quizAttempts[questionIndex] ? 'Try Again' : 'Submit Answer'}
-                              </button>
-                            ) : (
-                              <div className="text-sm">
-                                {quizAnswers[questionIndex] === quizItem.correct ? (
-                                  <p className="text-orange-600">✓ Correct! Well done!</p>
-                                ) : (
-                                  <div>
-                                    <p className="text-red-600 font-medium">✗ Incorrect.</p>
-                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-2">
-                                      <p className="text-orange-800">Take a moment to:</p>
-                                      <ul className="list-disc pl-5 mt-2 space-y-1 text-orange-700">
-                                        <li>Review the chapter material carefully</li>
-                                        <li>Focus on the key points related to this question</li>
-                                        <li>Think about the concepts discussed</li>
-                                      </ul>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                        )}
+                      </div>
+                      {isChapterCompleted(module.id, chapter) && (
+                        <Check className="w-5 h-5 text-green-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chapter Content Modal */}
+        {showChapterContent && selectedChapter && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-black">{selectedChapter}</h2>
+                <button 
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    setShowChapterContent(false);
+                    setShowQuiz(false);
+                    setQuizAnswers({});
+                    setSubmittedAnswers({});
+                    setQuizAttempts({});
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {chapterContent[selectedChapter] && (
+                <div className="space-y-8">
+                  {!showQuiz ? (
+                    <>
+                      {/* Introduction */}
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <p className="text-lg text-gray-700">{chapterContent[selectedChapter].introduction}</p>
+                      </div>
+
+                      {/* Sections */}
+                      {chapterContent[selectedChapter].sections.map((section, index) => (
+                        <div key={index} className="border-b pb-6">
+                          <h3 className="text-xl font-semibold mb-4 text-black">{section.title}</h3>
+                          <p className="text-gray-700 mb-4">{section.content}</p>
+                          <div className="bg-orange-50 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2 text-black">Key Points:</h4>
+                            <ul className="list-disc pl-5 space-y-2">
+                              {section.keyPoints.map((point, i) => (
+                                <li key={i} className="text-gray-700">{point}</li>
+                              ))}
+                            </ul>
                           </div>
                         </div>
                       ))}
 
-                      {/* Complete Chapter Button */}
-                      <div className="flex justify-end mt-8">
+                      {/* Start Quiz Button */}
+                      <div className="flex justify-center pt-4">
                         <button
-                          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
-                          onClick={() => {
-                            const allQuestionsAnswered = chapterContent[selectedChapter].quiz.every(
-                              (quiz, index) => submittedAnswers[index] && quizAnswers[index] === quiz.correct
-                            );
-                            
-                            if (allQuestionsAnswered) {
-                              const totalAttempts = Object.values(quizAttempts).reduce((a, b) => a + b, 0);
-                              const questionsCount = chapterContent[selectedChapter].quiz.length;
-                              // Calculate tokens based on attempts (fewer attempts = more tokens)
-                              const baseTokens = 50;
-                              const tokenMultiplier = Math.max(0.5, 1 - ((totalAttempts - questionsCount) * 0.1));
-                              const earnedTokens = Math.round(baseTokens * tokenMultiplier);
-
-                              handleChapterComplete(
-                                selectedChapter,
-                                questionsCount,
-                                questionsCount,
-                                earnedTokens
-                              );
-                              setShowChapterContent(false);
-                              setShowQuiz(false);
-                              setQuizAnswers({});
-                              setSubmittedAnswers({});
-                              setQuizAttempts({});
-                            } else {
-                              alert('Please answer all questions correctly before completing the chapter.');
-                            }
-                          }}
+                          className="bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
+                          onClick={() => setShowQuiz(true)}
                         >
-                          Complete Chapter
+                          <span>Start Knowledge Check</span>
+                          <span className="text-xl">📝</span>
                         </button>
                       </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                    </>
+                  ) : (
+                    <div className="space-y-8">
+                      {/* Quiz Header */}
+                      <div className="bg-orange-50 p-6 rounded-lg">
+                        <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-xl font-semibold text-black">Knowledge Check</h3>
+                          <button
+                            className="text-orange-600 hover:text-orange-800 text-sm flex items-center space-x-2"
+                            onClick={() => {
+                              if (window.confirm('Going back will reset your quiz progress. Are you sure?')) {
+                                setShowQuiz(false);
+                                setQuizAnswers({});
+                                setSubmittedAnswers({});
+                                setQuizAttempts({});
+                              }
+                            }}
+                          >
+                            <span>← Back to Material</span>
+                          </button>
+                        </div>
 
-      {/* Milestone Popup */}
-      <AnimatePresence>
-        {showMilestone && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowMilestone(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 relative"
-              onClick={e => e.stopPropagation()}
-            >
-              <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                onClick={() => setShowMilestone(false)}
-              >
-                ✕
-              </button>
-              
-              <div className="flex flex-col items-center">
-                <motion.img
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                  src={`/images/${currentMilestone / 20 + 1}.png`}
-                  alt={`Milestone ${currentMilestone / 20 + 1}`}
-                  className="w-64 h-64 object-contain mb-6"
-                />
-                
-                <motion.h2
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent"
-                >
-                  Congratulations! 🎉
-                </motion.h2>
-                
-                <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-xl text-center text-gray-600 mb-6"
-                >
-                  You've reached {currentMilestone}% of your learning journey!
-                </motion.p>
-                
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-orange-50 p-4 rounded-lg text-center"
-                >
-                  <p className="text-orange-800 font-medium">
-                    Keep up the great work! Your dedication to learning is impressive.
-                  </p>
-                </motion.div>
-              </div>
-            </motion.div>
+                        {/* Quiz Questions */}
+                        {chapterContent[selectedChapter].quiz.map((quizItem, questionIndex) => (
+                          <div key={questionIndex} className="space-y-4 mb-8">
+                            <div className="flex justify-between items-center">
+                              <p className="font-medium text-black">{quizItem.question}</p>
+                              {quizAttempts[questionIndex] > 0 && (
+                                <span className="text-sm text-gray-500">
+                                  Attempts: {quizAttempts[questionIndex]}
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              {quizItem.options.map((option, optionIndex) => (
+                                <button
+                                  key={optionIndex}
+                                  className={getAnswerButtonClass(questionIndex, optionIndex, quizItem.correct)}
+                                  onClick={() => !submittedAnswers[questionIndex] && handleAnswerSelect(questionIndex, optionIndex)}
+                                  disabled={submittedAnswers[questionIndex]}
+                                >
+                                  {option}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="mt-4">
+                              {!submittedAnswers[questionIndex] ? (
+                                <button
+                                  className={`px-4 py-2 rounded-lg ${
+                                    quizAnswers[questionIndex] !== undefined
+                                      ? 'bg-black text-white hover:bg-gray-800'
+                                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  }`}
+                                  onClick={() => quizAnswers[questionIndex] !== undefined && handleQuizSubmit(questionIndex)}
+                                  disabled={quizAnswers[questionIndex] === undefined}
+                                >
+                                  {quizAttempts[questionIndex] ? 'Try Again' : 'Submit Answer'}
+                                </button>
+                              ) : (
+                                <div className="text-sm">
+                                  {quizAnswers[questionIndex] === quizItem.correct ? (
+                                    <p className="text-orange-600">✓ Correct! Well done!</p>
+                                  ) : (
+                                    <div>
+                                      <p className="text-red-600 font-medium">✗ Incorrect.</p>
+                                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-2">
+                                        <p className="text-orange-800">Take a moment to:</p>
+                                        <ul className="list-disc pl-5 mt-2 space-y-1 text-orange-700">
+                                          <li>Review the chapter material carefully</li>
+                                          <li>Focus on the key points related to this question</li>
+                                          <li>Think about the concepts discussed</li>
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Complete Chapter Button */}
+                        <div className="flex justify-end mt-8">
+                          <button
+                            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
+                            onClick={() => {
+                              const allQuestionsAnswered = chapterContent[selectedChapter].quiz.every(
+                                (quiz, index) => submittedAnswers[index] && quizAnswers[index] === quiz.correct
+                              );
+                              
+                              if (allQuestionsAnswered) {
+                                const totalAttempts = Object.values(quizAttempts).reduce((a, b) => a + b, 0);
+                                const questionsCount = chapterContent[selectedChapter].quiz.length;
+                                // Calculate tokens based on attempts (fewer attempts = more tokens)
+                                const baseTokens = 50;
+                                const tokenMultiplier = Math.max(0.5, 1 - ((totalAttempts - questionsCount) * 0.1));
+                                const earnedTokens = Math.round(baseTokens * tokenMultiplier);
+
+                                handleChapterComplete(
+                                  selectedChapter,
+                                  questionsCount,
+                                  questionsCount,
+                                  earnedTokens
+                                );
+                                setShowChapterContent(false);
+                                setShowQuiz(false);
+                                setQuizAnswers({});
+                                setSubmittedAnswers({});
+                                setQuizAttempts({});
+                              } else {
+                                alert('Please answer all questions correctly before completing the chapter.');
+                              }
+                            }}
+                          >
+                            Complete Chapter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
-      </AnimatePresence>
 
-      {/* Finance Chatbot */}
-      <FinanceChatbot />
+        {/* Milestone Popup */}
+        <AnimatePresence>
+          {showMilestone && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={() => setShowMilestone(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 relative"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowMilestone(false)}
+                >
+                  ✕
+                </button>
+                
+                <div className="flex flex-col items-center">
+                  <motion.img
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                    src={`/images/${currentMilestone / 20 + 1}.png`}
+                    alt={`Milestone ${currentMilestone / 20 + 1}`}
+                    className="w-64 h-64 object-contain mb-6"
+                  />
+                  
+                  <motion.h2
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent"
+                  >
+                    Congratulations! 🎉
+                  </motion.h2>
+                  
+                  <motion.p
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-xl text-center text-gray-600 mb-6"
+                  >
+                    You've reached {currentMilestone}% of your learning journey!
+                  </motion.p>
+                  
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-orange-50 p-4 rounded-lg text-center"
+                  >
+                    <p className="text-orange-800 font-medium">
+                      Keep up the great work! Your dedication to learning is impressive.
+                    </p>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Finance Chatbot */}
+        <FinanceChatbot />
+      </div>
     </div>
   );
 };

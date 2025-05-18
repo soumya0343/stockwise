@@ -242,106 +242,109 @@ const OnboardingPage = () => {
   };
 
   const handleSubmit = async () => {
-  if (validateForm()) {
-    setFormSubmitted(true);
+    if (validateForm()) {
+      setFormSubmitted(true);
+      try {
+        const response = await api.register({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          investmentLevel: formData.investmentLevel,
+          riskTolerance: formData.riskTolerance,
+          characterSelected: formData.characterSelected,
+          goals: formData.goals
+        });
+        
+        // Update application state
+        setStats({
+          xp: response.user.stats.xp,
+          streak: response.user.stats.streak
+        });
+
+        // Navigate to next step
+        goToNextStep();
+      } catch (error) {
+        setErrors({
+          ...errors,
+          submit: error.message || 'Registration failed'
+        });
+        setFormSubmitted(false);
+      }
+    }
+  };
+
+  // Add navigation guard
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        if (response.data) {
+          // If user is already logged in, redirect to dashboard
+          setStep(8);
+        }
+      } catch (error) {
+        // User is not authenticated, stay on current step
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Update the final step to handle proper navigation
+  const handleStartLearning = async () => {
     try {
-      const response = await api.register({
+      const response = await api.get('/auth/me');
+      if (response.data) {
+        window.location.href = '/dashboard';
+      } else {
+        setStep(7); // Go to login if not authenticated
+      }
+    } catch (error) {
+      setStep(7); // Go to login if not authenticated
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!formData.email || !formData.password) {
+      setErrors({ submit: 'Please fill in all fields' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.auth.login(formData.email, formData.password);
+      setStep(8); // Go to dashboard
+    } catch (error) {
+      setErrors({
+        ...errors,
+        submit: error.message || 'Login failed. Please try again.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      await api.auth.register({
         name: formData.name,
         email: formData.email,
-        password: formData.password,
-        investmentLevel: formData.investmentLevel,
-        riskTolerance: formData.riskTolerance,
-        characterSelected: formData.characterSelected,
-        goals: formData.goals
+        password: formData.password
       });
-      
-      // Store auth token
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      // Update application state
-      setStats({
-        xp: response.user.stats.xp,
-        streak: response.user.stats.streak
-      });
-
-      // Navigate to next step
       goToNextStep();
     } catch (error) {
       setErrors({
         ...errors,
-        submit: error.message || 'Registration failed'
+        submit: error.message || 'Registration failed. Please try again.'
       });
+    } finally {
+      setLoading(false);
       setFormSubmitted(false);
     }
-  }
-};
-
-// Add navigation guard
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    // If user is already logged in, redirect to dashboard
-    setStep(8);
-  }
-}, []);
-
-// Update the final step to handle proper navigation
-const handleStartLearning = () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    setStep(7); // Go to login if not authenticated
-  } else {
-    window.location.href = '/dashboard'; // Navigate to dashboard if authenticated
-  }
-};
-
-  const handleLogin = async () => {
-        if (!formData.email || !formData.password) {
-            setErrors({ submit: 'Please fill in all fields' });
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await api.auth.login(formData.email, formData.password);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            setStep(8); // Go to dashboard
-        } catch (error) {
-            setErrors({
-                ...errors,
-                submit: error.message || 'Login failed. Please try again.'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRegister = async () => {
-        if (!validateForm()) return;
-
-        setLoading(true);
-        try {
-            const response = await api.auth.register({
-                name: formData.name,
-                email: formData.email,
-                password: formData.password
-            });
-            
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            goToNextStep();
-        } catch (error) {
-            setErrors({
-                ...errors,
-                submit: error.message || 'Registration failed. Please try again.'
-            });
-        } finally {
-            setLoading(false);
-            setFormSubmitted(false);
-        }
-    };
+  };
 
   const renderStep = () => {
     switch (step) {

@@ -30,9 +30,8 @@ export const AuthProvider = ({ children }) => {
   // Add auth token to requests
   api.interceptors.request.use(
     (config) => {
-      const token = sessionStorage.getItem('token'); // Using sessionStorage instead of localStorage
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (user?.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
       }
       return config;
     },
@@ -52,14 +51,13 @@ export const AuthProvider = ({ children }) => {
     }
   );
 
-  const loadUser = useCallback(async (token) => {
+  const loadUser = useCallback(async () => {
     try {
       const response = await api.get('/auth/me');
       setUser(response.data);
       setError(null);
     } catch (error) {
       console.error('Error loading user:', error);
-      sessionStorage.removeItem('token');
       setError('Session expired. Please login again.');
     } finally {
       setLoading(false);
@@ -68,44 +66,54 @@ export const AuthProvider = ({ children }) => {
 
   // Check auth status on mount
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      loadUser(token);
-    } else {
-      setLoading(false);
-    }
+    loadUser();
   }, [loadUser]);
 
   const register = async (userData) => {
     try {
+      console.log('Attempting registration with data:', { ...userData, password: '[REDACTED]' });
       const response = await api.post('/auth/register', userData);
+      console.log('Registration response:', response.data);
+      
       const { token, user: newUser } = response.data;
-      sessionStorage.setItem('token', token);
-      setUser(newUser);
+      setUser({ ...newUser, token });
       setError(null);
       return newUser;
     } catch (error) {
-      setError(error.response?.data?.message || 'Registration failed');
+      console.error('Registration error in AuthContext:', error.response?.data || error);
+      const errorMessage = error.response?.data?.message || 'Registration failed';
+      setError(errorMessage);
       throw error;
     }
   };
 
   const login = async (credentials) => {
     try {
+      console.log('Making login request to server...');
       const response = await api.post('/auth/login', credentials);
+      console.log('Server response:', response.data);
+      
       const { token, user: loggedInUser } = response.data;
-      sessionStorage.setItem('token', token);
-      setUser(loggedInUser);
+      
+      if (!token || !loggedInUser) {
+        console.log('Invalid response - missing token or user');
+        setError('Invalid response from server');
+        return null;
+      }
+      
+      console.log('Login successful, setting user');
+      setUser({ ...loggedInUser, token });
       setError(null);
       return loggedInUser;
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed');
+      console.error('Login error:', error.response?.data || error);
+      const errorMessage = error.response?.data?.message || 'Login failed';
+      setError(errorMessage);
       throw error;
     }
   };
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem('token');
     setUser(null);
     setError(null);
   }, []);
@@ -113,7 +121,7 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfile = async (profileData) => {
     try {
       const response = await api.put('/user/profile', profileData);
-      setUser(response.data);
+      setUser({ ...response.data, token: user.token });
       setError(null);
       return response.data;
     } catch (error) {
@@ -125,7 +133,7 @@ export const AuthProvider = ({ children }) => {
   const updateUserStats = async (statsData) => {
     try {
       const response = await api.put('/user/stats', statsData);
-      setUser(response.data);
+      setUser({ ...response.data, token: user.token });
       setError(null);
       return response.data;
     } catch (error) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Car, ArrowRight, Calendar, RefreshCw, TrendingUp, Shield, Rocket, Target, BarChart, Sparkles, Flag, ShoppingBag } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './StockwiseOnboarding.css';
 import { motion } from 'framer-motion';
 
@@ -10,11 +11,241 @@ const AVATAR_IMAGE = '/images/welcome_ready.png';
 const CHOOSE_GOAL_IMAGE = '/images/choose_goal.png';
 const EXCITED_AVATAR = '/images/excitedd.png';
 
+// StepIcon component
+const StepIcon = ({ step, isActive, isCompleted }) => {
+  const getIcon = (stepNumber) => {
+    switch (stepNumber) {
+      case 1:
+        return <Rocket size={24} />;
+      case 2:
+        return <Target size={24} />;
+      case 3:
+        return <BarChart size={24} />;
+      case 4:
+        return <Sparkles size={24} />;
+      case 5:
+        return <Flag size={24} />;
+      default:
+        return <Rocket size={24} />;
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ scale: 0.8 }}
+      animate={{ 
+        scale: isActive ? 1.1 : 1,
+        rotate: isCompleted ? 360 : 0
+      }}
+      transition={{ 
+        duration: 0.5,
+        rotate: { duration: 0.5 },
+        scale: { type: "spring", stiffness: 300 }
+      }}
+      className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 relative ${
+        isActive 
+          ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg' 
+          : isCompleted
+            ? 'bg-gradient-to-br from-green-500 to-green-600 text-white'
+            : 'bg-gray-100 text-gray-400'
+      }`}
+    >
+      {getIcon(step)}
+      {isCompleted && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
+        >
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
+
+// RoadmapStep component
+const RoadmapStep = ({ number, title, isActive, isCompleted }) => (
+  <motion.div 
+    initial={{ x: -50, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    transition={{ duration: 0.5, delay: number * 0.1 }}
+    className="relative flex items-start mb-8 last:mb-0"
+  >
+    {/* Vertical line with animated gradient */}
+    {number < 5 && (
+      <div className="absolute left-6 top-12 bottom-0">
+        <motion.div 
+          initial={{ height: 0 }}
+          animate={{ height: '100%' }}
+          transition={{ duration: 0.5, delay: number * 0.2 }}
+          className={`w-1 rounded-full transition-all duration-500 ${
+            isCompleted 
+              ? 'bg-gradient-to-b from-green-500 via-orange-400 to-orange-500 animate-pulse'
+              : isActive
+                ? 'bg-gradient-to-b from-gray-200 via-orange-300 to-gray-200 animate-pulse'
+                : 'bg-gray-200'
+          }`}
+        >
+          {/* Animated dots */}
+          {isActive && (
+            <motion.div
+              initial={{ y: 0, opacity: 0 }}
+              animate={{ y: [0, 100], opacity: [0, 1, 0] }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+              className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full bg-orange-500"
+            />
+          )}
+        </motion.div>
+      </div>
+    )}
+    
+    {/* Step content */}
+    <div className="flex items-start group">
+      {/* Icon */}
+      <div className="mr-4 z-10">
+        <StepIcon step={number} isActive={isActive} isCompleted={isCompleted} />
+      </div>
+      
+      {/* Step details */}
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: number * 0.15 }}
+        className="flex-1 transition-all duration-500"
+      >
+        <div className={`w-full min-w-[200px] h-[48px] flex items-center px-4 rounded-lg transition-all duration-500 ${
+          isActive 
+            ? 'bg-gradient-to-br from-orange-50 to-orange-100 shadow-lg border-2 border-orange-200 transform scale-105' 
+            : isCompleted
+              ? 'bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200'
+              : 'bg-gray-50 border-2 border-gray-200 group-hover:bg-gray-100 group-hover:transform group-hover:scale-105'
+        }`}>
+          <h3 className={`font-bold text-lg transition-colors duration-500 ${
+            isActive ? 'text-orange-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
+          }`}>
+            {title}
+          </h3>
+        </div>
+      </motion.div>
+    </div>
+  </motion.div>
+);
+
+// Back Button Component
+const BackButton = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="fixed top-4 left-4 flex items-center space-x-2 text-gray-800 hover:text-orange-600 transition-colors z-50 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border-2 border-gray-200"
+  >
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      className="h-6 w-6" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor"
+    >
+      <path 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        strokeWidth={2} 
+        d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+      />
+    </svg>
+    <span className="font-medium">Back</span>
+  </button>
+);
+
+// Sidebar component
+const Sidebar = React.memo(({ currentScreen, totalScreens }) => {
+  const progressPercentage = ((currentScreen) / (totalScreens - 1)) * 100;
+  
+  // Define roadmap steps
+  const roadmapSteps = [
+    { title: "Welcome" },
+    { title: "Login" },
+    { title: "Choose Your Goal" },
+    { title: "Set Your Target" },
+    { title: "Analyze Spending" },
+    { title: "Growth Projection" }
+  ];
+
+  return (
+    <motion.div 
+      initial={{ x: -320 }}
+      animate={{ x: 0 }}
+      transition={{ type: "spring", stiffness: 100 }}
+      className="fixed left-0 top-0 h-full w-[320px] bg-white/80 backdrop-blur-xl border-r-4 border-gray-800 p-8 shadow-[4px_0px_0px_rgba(31,41,55,0.8)] overflow-y-auto"
+    >
+      {currentScreen > 0 && <BackButton onClick={() => window.history.back()} />}
+      <div className="mb-12 mt-16">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">
+            Your Journey
+          </h2>
+          <div className="h-1.5 w-32 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
+        </motion.div>
+      </div>
+      
+      <div className="space-y-2">
+        {roadmapSteps.map((step, index) => (
+          <RoadmapStep
+            key={index}
+            number={index + 1}
+            title={step.title}
+            isActive={currentScreen === index}
+            isCompleted={currentScreen > index}
+          />
+        ))}
+      </div>
+
+      {/* Progress indicator */}
+      <motion.div 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="fixed bottom-8 left-8 right-8 max-w-[256px]"
+      >
+        <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-gray-200 shadow-lg">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-medium text-gray-600">Progress</span>
+            <motion.span 
+              key={progressPercentage}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text"
+            >
+              {Math.round(progressPercentage)}%
+            </motion.span>
+          </div>
+          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercentage}%` }}
+              transition={{ duration: 0.5, type: "spring" }}
+              className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
+            />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+});
+
 // Main App Component
 function StockwiseOnboarding() {
   const navigate = useNavigate();
-
-  // State management
+  const { login } = useAuth();
   const [currentScreen, setCurrentScreen] = useState(0);
   const [amount, setAmount] = useState(3500000);
   const [analyzeStep, setAnalyzeStep] = useState(0);
@@ -28,18 +259,42 @@ function StockwiseOnboarding() {
   const [userName, setUserName] = useState('');
   const [showNameInput, setShowNameInput] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-  
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoginSuccessful, setIsLoginSuccessful] = useState(false);
+
+  const handleNameSubmit = (e) => {
+    e.preventDefault();
+    if (userName.trim()) {
+      // Batch state updates together to prevent multiple re-renders
+      Promise.resolve().then(() => {
+        setShowNameInput(false);
+        setShowWelcome(true);
+      });
+    }
+  };
+
   // Add keyboard event listener for Enter key
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (e.key === 'Enter' && showWelcome) {
-        nextScreen();
+      if (e.key === 'Enter') {
+        if (currentScreen === 1) {
+          // On login screen, let the form handle the Enter key
+          return;
+        }
+        if (showWelcome) {
+          nextScreen();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showWelcome]);
+  }, [showWelcome, currentScreen]);
   
   // Sample transaction data
   const transactions = [
@@ -56,7 +311,7 @@ function StockwiseOnboarding() {
   ];
   
   // Constants
-  const totalScreens = 5;
+  const totalScreens = 6;
   const progressPercentage = ((currentScreen) / (totalScreens - 1)) * 100;
 
   // Investment calculation function
@@ -106,6 +361,11 @@ function StockwiseOnboarding() {
 
   // Navigation functions with transition
   const nextScreen = () => {
+    // Prevent navigation from login screen if there's an error
+    if (currentScreen === 1 && error) {
+      return;
+    }
+    
     if (currentScreen < totalScreens - 1) {
       setTransitionDirection('next');
       setIsTransitioning(true);
@@ -129,20 +389,28 @@ function StockwiseOnboarding() {
 
   // Animation effect for transaction analysis
   useEffect(() => {
-    if (currentScreen === 3) {
+    if (currentScreen === 4) {
       // Quick initial transition to skeletons
-      const timer1 = setTimeout(() => setAnalyzeStep(1), 660);
+      const timer1 = setTimeout(() => setAnalyzeStep(1), 500);
       // Show transactions being processed
-      const timer2 = setTimeout(() => setAnalyzeStep(2), 7520);
+      const timer2 = setTimeout(() => setAnalyzeStep(2), 2000);
       // Final insight generation
-      const timer3 = setTimeout(() => setAnalyzeStep(3), 11560);
+      const timer3 = setTimeout(() => setAnalyzeStep(3), 3000);
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);
       };
+    } else {
+      // Reset analyzeStep when leaving the screen
+      setAnalyzeStep(0);
     }
   }, [currentScreen]);
+
+  // Reset analyzeStep when component mounts
+  useEffect(() => {
+    setAnalyzeStep(0);
+  }, []);
 
   // Button Component
   const NeopopButton = ({ onClick, children, className, primary = false, size = "default" }) => {
@@ -190,30 +458,6 @@ function StockwiseOnboarding() {
     );
   };
 
-  // Back Button Component
-  const BackButton = ({ onClick }) => (
-    <button
-      onClick={onClick}
-      className="fixed top-4 left-4 flex items-center space-x-2 text-gray-800 hover:text-orange-600 transition-colors z-50 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border-2 border-gray-200"
-    >
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        className="h-6 w-6" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-      >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth={2} 
-          d="M10 19l-7-7m0 0l7-7m-7 7h18" 
-        />
-      </svg>
-      <span className="font-medium">Back</span>
-    </button>
-  );
-
   // Custom car icons
   const ToyotaFortunerIcon = ({ className = "" }) => (
     <svg 
@@ -240,10 +484,52 @@ function StockwiseOnboarding() {
     </svg>
   );
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Validate form data before sending
+      if (!formData.email || !formData.password) {
+        setError('Please provide both email and password');
+        setLoading(false);
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Attempting login...');
+      const result = await login({
+        email: formData.email,
+        password: formData.password
+      });
+      console.log('Login result:', result);
+
+      if (!result) {
+        setError('Invalid email or password. Please try again or sign up.');
+        setLoading(false);
+        return;
+      }
+
+      // If we get here, login was successful
+      setLoading(false);
+      nextScreen();
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.message || 'Invalid email or password. Please try again or sign up.');
+      setLoading(false);
+    }
+  };
+
   // Define all screens in the app
   const screens = [
     // Screen 1: Welcome with Name Input
-    <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
+    <div key="welcome" className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto py-8">
           <motion.div
@@ -303,18 +589,12 @@ function StockwiseOnboarding() {
                         className="w-full px-6 py-4 border-3 border-gray-300 rounded-2xl focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-300 text-xl font-medium text-center shadow-inner"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && userName.trim()) {
-                            setShowNameInput(false);
-                            setShowWelcome(true);
+                            handleNameSubmit(e);
                           }
                         }}
                       />
                       <button
-                        onClick={() => {
-                          if (userName.trim()) {
-                            setShowNameInput(false);
-                            setShowWelcome(true);
-                          }
-                        }}
+                        onClick={handleNameSubmit}
                         className="w-full px-8 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 text-xl shadow-[4px_4px_0px_rgba(31,41,55,0.8)]"
                       >
                         That's My Name!
@@ -365,25 +645,132 @@ function StockwiseOnboarding() {
                   </motion.div>
                 )}
               </div>
+            </div>
           </div>
           
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="flex justify-center mt-8"
-            >
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="flex justify-center mt-8"
+          >
             <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
-              <span className="text-sm font-medium">Made for BITS Goa Hackathon 💪</span>
+              <span className="text-sm font-medium">Made by Soumya Gupta and Shubh Das 💪</span>
             </div>
-            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </div>,
+
+    // Screen 2: Login/Signup
+    <div key="login" className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto py-8">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-6xl font-bold">
+              <span className="text-black">stock</span>
+              <span className="text-[#E86A33]">wise</span>
+            </h1>
+          </motion.div>
+          
+          <div className="flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <div className="relative flex items-center" style={{ width: '900px' }}>
+                <motion.img
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  src={AVATAR_IMAGE}
+                  alt="Stockwise Avatar"
+                  className="w-[300px] h-[300px] object-cover"
+                  style={{ marginLeft: '40px' }}
+                />
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="absolute left-[45%] top-[0%] bg-gradient-to-br from-white to-orange-50 px-10 py-8 rounded-[2rem] border-4 border-gray-800 shadow-[8px_8px_0px_rgba(31,41,55,0.8)]"
+                  style={{ 
+                    width: 'max-content',
+                    minWidth: '400px',
+                    transform: 'translateY(-50%)'
+                  }}
+                >
+                  <div className="absolute left-[-16px] top-[50%] w-0 h-0" style={{
+                    transform: 'translateY(-50%)',
+                    borderTop: '12px solid transparent',
+                    borderBottom: '12px solid transparent',
+                    borderRight: '16px solid #1f2937'
+                  }}></div>
+                  <div className="absolute left-[-8px] top-[50%] w-0 h-0" style={{
+                    transform: 'translateY(-50%)',
+                    borderTop: '12px solid transparent',
+                    borderBottom: '12px solid transparent',
+                    borderRight: '16px solid #fff'
+                  }}></div>
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">Login to Continue</h2>
+                      <p className="text-gray-600">Enter your credentials to proceed</p>
+                    </div>
+                    {error && (
+                      <div className="bg-red-50 border-2 border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                        {error}
+                      </div>
+                    )}
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-6 py-4 border-3 border-gray-300 rounded-2xl focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-300 text-xl font-medium shadow-inner"
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full px-6 py-4 border-3 border-gray-300 rounded-2xl focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-300 text-xl font-medium shadow-inner"
+                        required
+                      />
+                      <div className="flex flex-col gap-4">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className={`w-full px-8 py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 text-xl shadow-[4px_4px_0px_rgba(31,41,55,0.8)] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {loading ? 'Logging in...' : 'Login'}
+                        </button>
+                        <div className="text-center">
+                          <span className="text-gray-600">Don't have an account? </span>
+                          <button 
+                            type="button"
+                            onClick={() => navigate('/register')}
+                            className="text-orange-600 font-semibold hover:text-orange-700"
+                          >
+                            Sign up
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>,
 
-    // Screen 2: Choose Your Goal
+    // Screen 3: Choose Your Goal
     <motion.div
+      key="goal"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -454,7 +841,7 @@ function StockwiseOnboarding() {
       </div>
     </motion.div>,
 
-    // Screen 3: Goal Amount
+    // Screen 4: Goal Amount
     <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto py-8">
@@ -571,7 +958,7 @@ function StockwiseOnboarding() {
       </div>
     </div>,
 
-    // Screen 4: Transaction Analysis
+    // Screen 5: Transaction Analysis
     <div className="flex flex-col h-full justify-center">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-4xl font-bold mb-10 text-center">Let's see where your money goes... 🕵️</h2>
@@ -759,7 +1146,7 @@ function StockwiseOnboarding() {
       </div>
     </div>,
 
-    // Screen 5: Investment Growth Visualization
+    // Screen 6: Investment Growth Visualization
     <div className="min-h-[calc(100vh-2rem)]">
       <div className="container mx-auto px-4">
         <div className="py-8">
@@ -963,200 +1350,11 @@ function StockwiseOnboarding() {
     </div>,
   ];
 
-  // Add this new StepIcon component
-  const StepIcon = ({ step, isActive, isCompleted }) => {
-    const icons = {
-      1: Rocket,
-      2: Target,
-      3: BarChart,
-      4: Sparkles,
-      5: Flag
-    };
-    
-    const Icon = icons[step];
-    return (
-      <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ 
-          scale: isActive ? 1.1 : 1,
-          rotate: isCompleted ? 360 : 0
-        }}
-        transition={{ 
-          duration: 0.5,
-          rotate: { duration: 0.5 },
-          scale: { type: "spring", stiffness: 300 }
-        }}
-        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 relative ${
-          isActive 
-            ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg' 
-            : isCompleted
-              ? 'bg-gradient-to-br from-green-500 to-green-600 text-white'
-              : 'bg-gray-100 text-gray-400'
-        }`}
-      >
-        <Icon size={24} />
-        {isCompleted && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
-          >
-            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </motion.div>
-        )}
-      </motion.div>
-    );
-  };
-
-  // Update the RoadmapStep component
-  const RoadmapStep = ({ number, title, isActive, isCompleted }) => (
-    <motion.div 
-      initial={{ x: -50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5, delay: number * 0.1 }}
-      className="relative flex items-start mb-8 last:mb-0"
-    >
-      {/* Vertical line with animated gradient */}
-      {number < 5 && (
-        <div className="absolute left-6 top-12 bottom-0">
-          <motion.div 
-            initial={{ height: 0 }}
-            animate={{ height: '100%' }}
-            transition={{ duration: 0.5, delay: number * 0.2 }}
-            className={`w-1 rounded-full transition-all duration-500 ${
-              isCompleted 
-                ? 'bg-gradient-to-b from-green-500 via-orange-400 to-orange-500 animate-pulse'
-                : isActive
-                  ? 'bg-gradient-to-b from-gray-200 via-orange-300 to-gray-200 animate-pulse'
-                  : 'bg-gray-200'
-            }`}
-          >
-            {/* Animated dots */}
-            {isActive && (
-              <motion.div
-                initial={{ y: 0, opacity: 0 }}
-                animate={{ y: [0, 100], opacity: [0, 1, 0] }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-                className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 rounded-full bg-orange-500"
-              />
-            )}
-          </motion.div>
-            </div>
-      )}
-      
-      {/* Step content */}
-      <div className="flex items-start group">
-        {/* Icon */}
-        <div className="mr-4 z-10">
-          <StepIcon step={number} isActive={isActive} isCompleted={isCompleted} />
-        </div>
-        
-        {/* Step details */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: number * 0.15 }}
-          className="flex-1 transition-all duration-500"
-        >
-          <div className={`w-full min-w-[200px] h-[48px] flex items-center px-4 rounded-lg transition-all duration-500 ${
-            isActive 
-              ? 'bg-gradient-to-br from-orange-50 to-orange-100 shadow-lg border-2 border-orange-200 transform scale-105' 
-              : isCompleted
-                ? 'bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200'
-                : 'bg-gray-50 border-2 border-gray-200 group-hover:bg-gray-100 group-hover:transform group-hover:scale-105'
-          }`}>
-            <h3 className={`font-bold text-lg transition-colors duration-500 ${
-              isActive ? 'text-orange-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
-            }`}>
-              {title}
-            </h3>
-      </div>
-        </motion.div>
-    </div>
-    </motion.div>
-  );
-
-  // Define roadmap steps
-  const roadmapSteps = [
-    { title: "Welcome" },
-    { title: "Choose Your Goal" },
-    { title: "Set Your Target" },
-    { title: "Analyze Spending" },
-    { title: "Growth Projection" }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-beige-50 to-orange-50">
-      {currentScreen > 0 && <BackButton onClick={prevScreen} />}
       <div className="h-screen flex">
-        {/* Roadmap Side Panel */}
-        <motion.div 
-          initial={{ x: -320 }}
-          animate={{ x: 0 }}
-          transition={{ type: "spring", stiffness: 100 }}
-          className="fixed left-0 top-0 h-full w-[320px] bg-white/80 backdrop-blur-xl border-r-4 border-gray-800 p-8 shadow-[4px_0px_0px_rgba(31,41,55,0.8)] overflow-y-auto"
-        >
-          <div className="mb-12">
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">
-                Your Journey
-              </h2>
-              <div className="h-1.5 w-32 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
-            </motion.div>
-              </div>
-          
-          <div className="space-y-2">
-            {roadmapSteps.map((step, index) => (
-              <RoadmapStep
-                key={index}
-                number={index + 1}
-                title={step.title}
-                isActive={currentScreen === index}
-                isCompleted={currentScreen > index}
-              />
-          ))}
-        </div>
-
-          {/* Progress indicator */}
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="fixed bottom-8 left-8 right-8 max-w-[256px]"
-          >
-            <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-gray-200 shadow-lg">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-600">Progress</span>
-                <motion.span 
-                  key={progressPercentage}
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text"
-                >
-                  {Math.round(progressPercentage)}%
-                </motion.span>
-              </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.5, type: "spring" }}
-                  className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
-                />
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
+        {/* Use the new Sidebar component */}
+        <Sidebar currentScreen={currentScreen} totalScreens={totalScreens} />
 
         {/* Main Content - adjusted margin to account for side panel */}
         <div className="flex-1 ml-[320px]">

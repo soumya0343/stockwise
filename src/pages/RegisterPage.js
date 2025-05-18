@@ -42,14 +42,19 @@ const RegisterPage = () => {
     if (!validateForm()) return;
 
     try {
-      await register({
+      const response = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
       });
-      navigate('/onboarding');
+      console.log('Registration successful:', response);
+      navigate('/');
     } catch (error) {
       console.error('Registration error:', error);
+      setErrors(prev => ({
+        ...prev,
+        submit: error.response?.data?.message || 'Registration failed. Please try again.'
+      }));
     }
   };
 

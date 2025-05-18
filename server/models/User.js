@@ -27,27 +27,24 @@ const userSchema = new mongoose.Schema({
   investmentLevel: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced', 'expert'],
-    required: true,
     default: 'beginner'
   },
   riskTolerance: {
     type: Number,
     min: 1,
     max: 5,
-    required: true,
     default: 1
   },
   characterSelected: {
     type: Number,
-    required: true,
     min: 1,
-    max: 3
+    max: 3,
+    default: 1
   },
-  goals: [{
-    type: Number,
-    required: true,
-    min: 1
-  }],
+  goals: {
+    type: [Number],
+    default: []
+  },
   stats: {
     xp: {
       type: Number,
@@ -60,6 +57,10 @@ const userSchema = new mongoose.Schema({
     level: {
       type: Number,
       default: 1
+    },
+    tokens: {
+      type: Number,
+      default: 0
     },
     achievements: [{
       id: String,
@@ -80,6 +81,13 @@ const userSchema = new mongoose.Schema({
         default: Date.now
       },
       xpEarned: Number
+    }],
+    redeemedRewards: [{
+      rewardId: String,
+      redeemedAt: {
+        type: Date,
+        default: Date.now
+      }
     }]
   },
   preferences: {
@@ -108,8 +116,9 @@ const userSchema = new mongoose.Schema({
 // Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    return next();
+    next();
   }
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
