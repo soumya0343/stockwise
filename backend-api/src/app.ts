@@ -15,7 +15,24 @@ const app: Express = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+const allowedOrigins = [
+    'http://localhost:3001',
+    'https://stockwise.vercel.app'
+  ];
+  
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  }));
 
 // Parse JSON bodies
 app.use(json());
