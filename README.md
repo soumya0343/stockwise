@@ -23,7 +23,7 @@ A comprehensive investment learning platform with gamification features. Learn a
 
 1. Clone the repository:
 ```bash
-git clone [your-repo-url]
+git clone https://github.com/soumya0343/stockwise
 ```
 
 2. Install dependencies:
@@ -31,9 +31,10 @@ git clone [your-repo-url]
 npm install
 ```
 
-3. Start the development server:
+3. Start the development server and db:
 ```bash
 npm start
+npm run dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
