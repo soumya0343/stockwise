@@ -4,98 +4,46 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-// Input validation middleware for registration
-const validateRegistrationInput = (req, res, next) => {
-  const { name, email, password } = req.body;
-  
-  // Check for required fields
-  if (!name || !email || !password) {
-    return res.status(400).json({ 
-      message: 'Please provide all required fields (name, email, and password)' 
-    });
-  }
-
-  // Validate email format
-  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ 
-      message: 'Please provide a valid email address' 
-    });
-  }
-
-  // Validate password length
-  if (password.length < 6) {
-    return res.status(400).json({ 
-      message: 'Password must be at least 6 characters long' 
-    });
-  }
-
-  // Validate name length
-  if (name.length < 2 || name.length > 50) {
-    return res.status(400).json({ 
-      message: 'Name must be between 2 and 50 characters' 
-    });
-  }
-
-  next();
-};
-
-// Input validation middleware for login
-const validateLoginInput = (req, res, next) => {
+// Input validation middleware
+const validateInput = (req, res, next) => {
   const { email, password } = req.body;
-  
-  // Check for required fields
   if (!email || !password) {
-    return res.status(400).json({ 
-      message: 'Please provide both email and password' 
-    });
+    return res.status(400).json({ message: 'Please provide all required fields' });
   }
-
-  // Validate email format
-  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ 
-      message: 'Please provide a valid email address' 
-    });
-  }
-
-  // Validate password length
   if (password.length < 6) {
-    return res.status(400).json({ 
-      message: 'Password must be at least 6 characters long' 
-    });
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
   }
-
   next();
 };
 
 // Register
-router.post('/register', validateRegistrationInput, async (req, res) => {
+router.post('/register', validateInput, async (req, res) => {
   try {
     const { 
       name, 
       email, 
-      password
+      password,
+      investmentLevel,
+      riskTolerance,
+      characterSelected,
+      goals 
     } = req.body;
-
-    console.log('Registration attempt:', { name, email }); // Log registration attempt
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log('User already exists:', email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create new user with default values for required fields
+    // Create new user with all onboarding data
     const user = new User({
       name,
       email,
       password,
-      investmentLevel: 'beginner',
-      riskTolerance: 1,
-      characterSelected: 1,
-      goals: [],
+      investmentLevel,
+      riskTolerance,
+      characterSelected,
+      goals,
       stats: {
         xp: 50, // Initial XP for completing onboarding
         streak: 1,
@@ -108,9 +56,7 @@ router.post('/register', validateRegistrationInput, async (req, res) => {
       }
     });
 
-    console.log('Attempting to save user...'); // Log before save
     await user.save();
-    console.log('User saved successfully'); // Log after save
 
     // Generate token
     const token = jwt.sign(
@@ -131,35 +77,28 @@ router.post('/register', validateRegistrationInput, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Registration error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    res.status(500).json({ 
-      message: 'Error creating user',
-      details: error.message 
-    });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Error creating user' });
   }
 });
 
 // Login
-router.post('/login', validateLoginInput, async (req, res) => {
+router.post('/login', validateInput, async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt:', { email }); // Log login attempt
 
-    // Find user and explicitly select password field
+    // Find user (explicitly select password field since it's excluded by default)
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
+    if (!user.password) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log('Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -179,23 +118,66 @@ router.post('/login', validateLoginInput, async (req, res) => {
       await user.save();
     }
 
-    console.log('Login successful for user:', email);
-
     res.json({
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        stats: user.stats,
-        investmentLevel: user.investmentLevel,
-        characterSelected: user.characterSelected,
-        goals: user.goals
+        stats: user.stats
       }
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Error logging in' });
+  }
+});
+
+// Token verification endpoint
+router.get('/verify', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    res.json({ valid: true });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Add endpoint to save onboarding data
+router.post('/users/onboarding', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update user with onboarding data
+    user.investmentLevel = req.body.investmentLevel;
+    user.riskTolerance = req.body.riskTolerance;
+    user.characterSelected = req.body.characterSelected;
+    user.goals = req.body.goals;
+    user.stats = req.body.stats;
+
+    await user.save();
+
+    res.json({ message: 'Onboarding data saved successfully' });
+  } catch (error) {
+    console.error('Save onboarding error:', error);
+    res.status(500).json({ message: 'Error saving onboarding data' });
   }
 });
 

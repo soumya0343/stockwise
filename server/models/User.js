@@ -146,10 +146,4 @@ userSchema.methods.updateLoginStreak = async function() {
   await this.save();
 };
 
-// Calculate level based on XP
-userSchema.methods.calculateLevel = function() {
-  const xpPerLevel = 100;
-  return Math.floor(this.stats.xp / xpPerLevel) + 1;
-};
-
 module.exports = mongoose.model('User', userSchema);

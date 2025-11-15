@@ -18,10 +18,34 @@ app.use(cors({
 }));
 app.use(express.json()); // Parse JSON request bodies
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/stockwise')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Database connection with retry logic
+const connectWithRetry = async () => {
+  const maxRetries = 5;
+  let retries = 0;
+
+  while (retries < maxRetries) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/stockwise', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log('Connected to MongoDB successfully');
+      return;
+    } catch (error) {
+      retries++;
+      console.error(`MongoDB connection attempt ${retries} failed:`, error);
+      if (retries === maxRetries) {
+        console.error('Max retries reached. Could not connect to MongoDB');
+        process.exit(1);
+      }
+      // Wait for 5 seconds before retrying
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+// Connect to database
+connectWithRetry();
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -62,8 +86,11 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Global error handler:', err);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 const PORT = process.env.PORT || 5001;

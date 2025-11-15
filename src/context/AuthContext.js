@@ -30,8 +30,9 @@ export const AuthProvider = ({ children }) => {
   // Add auth token to requests
   api.interceptors.request.use(
     (config) => {
-      if (user?.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
@@ -45,7 +46,10 @@ export const AuthProvider = ({ children }) => {
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
-        logout();
+        // Clear token and redirect to login if unauthorized
+        localStorage.removeItem('token');
+        setUser(null);
+        window.location.href = '/login';
       }
       return Promise.reject(error);
     }
@@ -53,12 +57,27 @@ export const AuthProvider = ({ children }) => {
 
   const loadUser = useCallback(async () => {
     try {
+      console.log('Loading user data...');
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      
+      if (!token) {
+        console.log('No token found, skipping user load');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Making request to /auth/me with token');
       const response = await api.get('/auth/me');
+      console.log('User data loaded:', response.data);
+      
       setUser(response.data);
       setError(null);
     } catch (error) {
       console.error('Error loading user:', error);
       setError('Session expired. Please login again.');
+      localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -76,11 +95,24 @@ export const AuthProvider = ({ children }) => {
       console.log('Registration response:', response.data);
       
       const { token, user: newUser } = response.data;
+      
+      // Store token in localStorage (same as login)
+      localStorage.setItem('token', token);
+      console.log('Token stored in localStorage after registration');
+      
       setUser({ ...newUser, token });
       setError(null);
       return newUser;
     } catch (error) {
       console.error('Registration error in AuthContext:', error.response?.data || error);
+      
+      // Handle network errors specifically
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        const errorMessage = 'Unable to connect to server. Please make sure the backend server is running on port 5001.';
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+      
       const errorMessage = error.response?.data?.message || 'Registration failed';
       setError(errorMessage);
       throw error;
@@ -96,17 +128,35 @@ export const AuthProvider = ({ children }) => {
       const { token, user: loggedInUser } = response.data;
       
       if (!token || !loggedInUser) {
-        console.log('Invalid response - missing token or user');
+        console.error('Invalid response - missing token or user:', response.data);
         setError('Invalid response from server');
         return null;
       }
       
-      console.log('Login successful, setting user');
+      console.log('Login successful, setting user and token');
+      // Store token in localStorage
+      localStorage.setItem('token', token);
+      console.log('Token stored in localStorage');
+      
+      // Set user state
       setUser({ ...loggedInUser, token });
       setError(null);
+      
+      // Verify token was stored
+      const storedToken = localStorage.getItem('token');
+      console.log('Verified stored token:', storedToken ? 'Token exists' : 'No token found');
+      
       return loggedInUser;
     } catch (error) {
       console.error('Login error:', error.response?.data || error);
+      
+      // Handle network errors specifically
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        const errorMessage = 'Unable to connect to server. Please make sure the backend server is running on port 5001.';
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+      
       const errorMessage = error.response?.data?.message || 'Login failed';
       setError(errorMessage);
       throw error;
@@ -114,6 +164,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = useCallback(() => {
+    console.log('Logging out, removing token from localStorage');
+    localStorage.removeItem('token');
     setUser(null);
     setError(null);
   }, []);
