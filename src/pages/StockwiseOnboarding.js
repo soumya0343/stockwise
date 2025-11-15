@@ -667,9 +667,7 @@ function StockwiseOnboarding() {
               transition={{ delay: 0.6 }}
               className="flex justify-center mt-8"
             >
-            <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
-              <span className="text-sm font-medium">Made by Soumya Gupta and Shubh Das 💪</span>
-            </div>
+            
             </motion.div>
         </div>
       </div>
