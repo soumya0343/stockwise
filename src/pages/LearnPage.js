@@ -11,13 +11,29 @@ import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 const LearnPage = () => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
-  const [completedChapters, setCompletedChapters] = useState(new Set());
   const [showChapterContent, setShowChapterContent] = useState(false);
-  const [chapterProgress, setChapterProgress] = useState({});
-  const [totalTokens, setTotalTokens] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [submittedAnswers, setSubmittedAnswers] = useState({});
   const [showQuiz, setShowQuiz] = useState(false);
@@ -30,37 +46,37 @@ const LearnPage = () => {
     addXP, 
     unlockAchievement, 
     completeChapter,
-    achievements 
+    achievements,
+    isChapterCompleted,
+    completedChapters,
+    chapterProgress,
+    totalTokens,
+    setTotalTokens,
+    unlockAchievementsSequentially,
+    setChapterProgress
   } = useGamification();
-
-  // Load user progress from database
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const response = await axios.get('/api/user/progress');
-        const { completedChapters, chapterProgress, totalTokens } = response.data;
-        setCompletedChapters(new Set(completedChapters));
-        setChapterProgress(chapterProgress);
-        setTotalTokens(totalTokens);
-      } catch (error) {
-        console.error('Error fetching user progress:', error);
-      }
-    };
-
-    fetchUserProgress();
-  }, []);
 
   // Save progress to database whenever completedChapters changes
   useEffect(() => {
     const saveProgress = async () => {
       try {
-        await axios.post('/api/user/progress', {
+        console.log('Saving progress:', {
           completedChapters: Array.from(completedChapters),
           chapterProgress,
           totalTokens
         });
+
+        const response = await api.post('/user/progress', {
+          completedChapters: Array.from(completedChapters),
+          chapterProgress,
+          totalTokens
+        });
+
+        console.log('Progress saved successfully:', response.data);
       } catch (error) {
-        console.error('Error saving progress:', error);
+        console.error('Error saving progress:', error.response?.data || error.message);
+        // Show error notification to user
+        alert('Failed to save progress. Please try again.');
       }
     };
 
@@ -73,11 +89,11 @@ const LearnPage = () => {
   useEffect(() => {
     const updateStreak = async () => {
       try {
-        const response = await axios.get('/api/user/stats');
+        const response = await api.get('/user/stats');
         const currentStreak = response.data.streak || 0;
         
         if (currentStreak !== 6) {
-          await axios.post('/api/user/update-streak', { streak: 6 });
+          await api.post('/user/update-streak', { streak: 6 });
           // Add 50 tokens for the streak
           const streakTokens = 50;
           setTotalTokens(prev => prev + streakTokens);
@@ -111,7 +127,7 @@ const LearnPage = () => {
         }
 
         // Check Week Streak Achievement
-        const response = await axios.get('/api/user/stats');
+        const response = await api.get('/user/stats');
         const currentStreak = response.data.streak || 0;
         if (currentStreak >= 7) {
           await unlockAchievement('WEEK_STREAK');
@@ -1370,64 +1386,111 @@ const LearnPage = () => {
     setShowChapterContent(true);
   };
 
-  const handleChapterComplete = (chapter, score, total, tokens) => {
-    // Update completed chapters
-    setCompletedChapters(prev => {
-      const newSet = new Set(prev);
-      newSet.add(chapter);
-      return newSet;
-    });
+  const handleChapterComplete = async (chapter, score, total, tokens) => {
+    try {
+      console.log('Completing chapter:', { chapter, score, total, tokens });
 
-    // Update chapter progress
-    setChapterProgress(prev => ({
-      ...prev,
-      [chapter]: (score / total) * 100
-    }));
+      // Check if token exists
+      const token = localStorage.getItem('token');
+      console.log('Token at chapter complete:', token);
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
-    // Update tokens
-    const newTotalTokens = totalTokens + tokens;
-    setTotalTokens(newTotalTokens);
-    
-    // Add XP for completing chapter and update daily progress
-    const xpEarned = Math.round((score / total) * 100) + 50; // Base XP + performance bonus
-    addXP(xpEarned);
-    completeChapter(chapter);
-    
-    // Check and unlock achievements
-    const completedCount = completedChapters.size + 1;
+      // Add XP for completing chapter and update daily progress
+      const xpEarned = Math.round((score / total) * 100) + 50; // Base XP + performance bonus
+      
+      // Save progress with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      let success = false;
 
-    // First Lesson Achievement
-    if (completedCount === 1) {
-      unlockAchievement('FIRST_LESSON');
+      while (retryCount < maxRetries && !success) {
+        try {
+          console.log(`Attempt ${retryCount + 1} to save progress`);
+          
+          await addXP(xpEarned);
+          await completeChapter(chapter);
+          setTotalTokens(prev => prev + tokens);
+          
+          // Update chapter progress to 100%
+          setChapterProgress(prev => ({
+            ...prev,
+            [chapter]: 100
+          }));
+          
+          success = true;
+          console.log('Progress saved successfully');
+        } catch (error) {
+          console.error(`Attempt ${retryCount + 1} failed:`, error);
+          
+          // If unauthorized, redirect to login immediately
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return;
+          }
+          
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw error;
+          }
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        }
+      }
+      
+      // Check and unlock achievements sequentially
+      const achievementsToUnlock = [];
+      const completedCount = completedChapters.size + 1;
+
+      // First Lesson Achievement
+      if (completedCount === 1) {
+        achievementsToUnlock.push('FIRST_LESSON');
+      }
+
+      // Perfect Score Achievement
+      if (score === total) {
+        achievementsToUnlock.push('PERFECT_QUIZ');
+      }
+
+      // Token Master Achievement
+      if (totalTokens + tokens >= 1000) {
+        achievementsToUnlock.push('TOKEN_MASTER');
+      }
+
+      // Week Streak Achievement - check if streak is 7 or more
+      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+      if (currentStreak >= 7) {
+        achievementsToUnlock.push('WEEK_STREAK');
+      }
+
+      // Unlock achievements sequentially if there are any to unlock
+      if (achievementsToUnlock.length > 0) {
+        console.log('Unlocking achievements:', achievementsToUnlock);
+        await unlockAchievementsSequentially(achievementsToUnlock);
+      }
+
+      // Show completion notification
+      showCompletionNotification(chapter, xpEarned, tokens);
+
+      // Close chapter content
+      setTimeout(() => {
+        setShowChapterContent(false);
+        setShowQuiz(false);
+        setQuizAnswers({});
+        setSubmittedAnswers({});
+        setQuizAttempts({});
+      }, 2000);
+    } catch (error) {
+      console.error('Error completing chapter:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else {
+        alert('There was an error saving your progress. Please try again.');
+      }
     }
-
-    // Perfect Score Achievement
-    if (score === total) {
-      unlockAchievement('PERFECT_QUIZ');
-    }
-
-    // Token Master Achievement
-    if (newTotalTokens >= 1000) {
-      unlockAchievement('TOKEN_MASTER');
-    }
-
-    // Week Streak Achievement - check if streak is 7 or more
-    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    if (currentStreak >= 7) {
-      unlockAchievement('WEEK_STREAK');
-    }
-
-    // Show completion notification
-    showCompletionNotification(chapter, xpEarned, tokens);
-
-    // Close chapter content
-    setTimeout(() => {
-      setShowChapterContent(false);
-      setShowQuiz(false);
-      setQuizAnswers({});
-      setSubmittedAnswers({});
-      setQuizAttempts({});
-    }, 2000);
   };
 
   // Add this new function for showing completion notification
@@ -1460,13 +1523,9 @@ const LearnPage = () => {
     }, 3000);
   };
 
-  const isChapterCompleted = (moduleId, chapter) => {
-    return completedChapters.has(chapter);
-  };
-
   const getChapterButtonClasses = (moduleId, chapter) => {
     const baseClasses = "w-full flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 text-left";
-    const isCompleted = isChapterCompleted(moduleId, chapter);
+    const isCompleted = isChapterCompleted(chapter);
     const isSelected = selectedChapter === chapter;
 
     if (isCompleted && isSelected) {
@@ -1818,7 +1877,7 @@ const LearnPage = () => {
                   <div className="flex items-center">
                     <Star className="w-5 h-5 text-yellow-500" />
                     <span className="ml-1 font-bold">
-                      {module.chapters.filter(chapter => isChapterCompleted(module.id, chapter)).length} / {module.chapters.length}
+                      {module.chapters.filter(chapter => isChapterCompleted(chapter)).length} / {module.chapters.length}
                     </span>
                   </div>
                 </div>
@@ -1833,13 +1892,13 @@ const LearnPage = () => {
                     >
                       <div className="flex-1">
                         <div className="font-medium">{chapter}</div>
-                        {isChapterCompleted(module.id, chapter) && (
+                        {isChapterCompleted(chapter) && (
                           <div className="text-sm text-green-600">
                             {chapterProgress[chapter]}% Complete
                           </div>
                         )}
                       </div>
-                      {isChapterCompleted(module.id, chapter) && (
+                      {isChapterCompleted(chapter) && (
                         <Check className="w-5 h-5 text-green-500" />
                       )}
                     </button>

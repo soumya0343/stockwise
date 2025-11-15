@@ -245,7 +245,7 @@ const Sidebar = React.memo(({ currentScreen, totalScreens }) => {
 // Main App Component
 function StockwiseOnboarding() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, isAuthenticated, loading: authLoading } = useAuth();
   const [currentScreen, setCurrentScreen] = useState(0);
   const [amount, setAmount] = useState(3500000);
   const [analyzeStep, setAnalyzeStep] = useState(0);
@@ -277,6 +277,19 @@ function StockwiseOnboarding() {
       });
     }
   };
+  
+  // Check if user is authenticated on mount and skip to Choose Your Goal screen
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    const token = localStorage.getItem('token');
+    if (token && isAuthenticated && (currentScreen === 0 || currentScreen === 1)) {
+      // User is authenticated, skip welcome and login screens, go to Choose Your Goal
+      console.log('User is authenticated, skipping to Choose Your Goal screen');
+      setCurrentScreen(2);
+    }
+  }, [isAuthenticated, authLoading, currentScreen]);
 
   // Add keyboard event listener for Enter key
   useEffect(() => {
@@ -287,7 +300,7 @@ function StockwiseOnboarding() {
           return;
         }
         if (showWelcome) {
-          nextScreen();
+        nextScreen();
         }
       }
     };
@@ -645,19 +658,19 @@ function StockwiseOnboarding() {
                   </motion.div>
                 )}
               </div>
-            </div>
+              </div>
           </div>
           
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex justify-center mt-8"
-          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex justify-center mt-8"
+            >
             <div className="inline-flex items-center space-x-2 border-2 border-black bg-yellow-100 py-2 px-4 rounded-lg">
               <span className="text-sm font-medium">Made by Soumya Gupta and Shubh Das 💪</span>
             </div>
-          </motion.div>
+            </motion.div>
         </div>
       </div>
     </div>,
