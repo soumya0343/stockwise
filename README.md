@@ -114,7 +114,8 @@ npm start
 
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend API**: [http://localhost:5001](http://localhost:5001)
-
+- **Live Demo**: [https://stockwise-mu.vercel.app/](https://stockwise-mu.vercel.app/)
+  
 ## Project Structure
 
 ```
