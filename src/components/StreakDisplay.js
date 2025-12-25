@@ -1,11 +1,9 @@
-import React from 'react';
-import { useGamification } from '../contexts/GamificationContext';
-import { Flame } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useGamification } from "../context/GamificationContext";
+import { Flame } from "lucide-react";
+import { motion } from "framer-motion";
 
 const StreakDisplay = () => {
-  const { streak } = useGamification();
-  const weekProgress = (2 / 7) * 100; // Fixed to show 2-day progress
+  const weekProgress = (2 / 7) * 100;
 
   return (
     <div className="bg-gradient-to-br from-orange-50 to-white p-4 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] relative overflow-hidden">
@@ -17,7 +15,7 @@ const StreakDisplay = () => {
         transition={{
           duration: 2,
           repeat: Infinity,
-          repeatType: "reverse"
+          repeatType: "reverse",
         }}
       />
       <div className="relative">
@@ -31,7 +29,7 @@ const StreakDisplay = () => {
               transition={{
                 duration: 1.5,
                 repeat: Infinity,
-                repeatType: "reverse"
+                repeatType: "reverse",
               }}
               className="relative"
             >
@@ -48,28 +46,34 @@ const StreakDisplay = () => {
               />
             </motion.div>
             <div>
-              <h3 className="font-bold text-lg bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">Learning Streak</h3>
-              <p className="text-xs text-orange-600/80">Keep the momentum going!</p>
+              <h3 className="font-bold text-lg bg-gradient-to-r from-orange-600 to-orange-400 text-transparent bg-clip-text">
+                Learning Streak
+              </h3>
+              <p className="text-xs text-orange-600/80">
+                Keep the momentum going!
+              </p>
             </div>
           </div>
           <div className="text-right">
-            <motion.div 
+            <motion.div
               className="relative"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{
                 duration: 0.5,
                 repeat: Infinity,
                 repeatType: "reverse",
-                repeatDelay: 2
+                repeatDelay: 2,
               }}
             >
-              <p className="font-bold text-3xl bg-gradient-to-br from-orange-600 to-orange-400 text-transparent bg-clip-text">2</p>
+              <p className="font-bold text-3xl bg-gradient-to-br from-orange-600 to-orange-400 text-transparent bg-clip-text">
+                2
+              </p>
             </motion.div>
             <p className="text-sm text-orange-600/80">Days</p>
           </div>
         </div>
         <div className="w-full h-4 bg-orange-100 rounded-full overflow-hidden">
-          <motion.div 
+          <motion.div
             className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 relative"
             initial={{ width: 0 }}
             animate={{ width: `${weekProgress}%` }}
@@ -92,16 +96,20 @@ const StreakDisplay = () => {
             <span>Week Goal:</span>
             <div className="flex items-center space-x-1">
               {[...Array(7)].map((_, i) => (
-                <div 
+                <div
                   key={i}
-                  className={`w-2 h-2 rounded-full ${i < 2 ? 'bg-orange-500' : 'bg-orange-200'}`}
+                  className={`w-2 h-2 rounded-full ${
+                    i < 2 ? "bg-orange-500" : "bg-orange-200"
+                  }`}
                 />
               ))}
             </div>
           </div>
-          <span className="text-xs font-medium text-orange-600">{Math.floor(weekProgress)}%</span>
+          <span className="text-xs font-medium text-orange-600">
+            {Math.floor(weekProgress)}%
+          </span>
         </div>
-        <motion.div 
+        <motion.div
           className="mt-2 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -116,4 +124,4 @@ const StreakDisplay = () => {
   );
 };
 
-export default StreakDisplay; 
+export default StreakDisplay;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const StockInvestPage = () => {
   const navigate = useNavigate();
@@ -147,7 +148,7 @@ const StockInvestPage = () => {
               </div>
               
               <button
-                onClick={() => alert('This would connect to a payment gateway in production!')}
+                onClick={() => toast.info('This would connect to a payment gateway in production!')}
                 className="w-full py-3 px-4 bg-black text-white rounded-lg font-bold hover:bg-gray-800 transition-all duration-200"
               >
                 Buy Now

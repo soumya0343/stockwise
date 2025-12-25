@@ -20,7 +20,7 @@ const LoginPage = () => {
 
     try {
       await login(formData);
-      navigate('/onboarding');
+      navigate('/');
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to login. Please try again.');
     } finally {

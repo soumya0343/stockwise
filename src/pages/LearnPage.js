@@ -1,29 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ShoppingBag, TrendingUp, ArrowRight, DollarSign, Trophy, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import FinanceChatbot from '../components/FinanceChatbot';
-import { useGamification } from '../contexts/GamificationContext';
-import { XPBar, StreakCounter, DailyGoalProgress, AchievementBadge } from '../components/GamificationElements';
-import { ACHIEVEMENTS } from '../contexts/GamificationContext';
-import StreakDisplay from '../components/StreakDisplay';
-import confetti from 'canvas-confetti';
-import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Check,
+  ShoppingBag,
+  TrendingUp,
+  ArrowRight,
+  DollarSign,
+  Trophy,
+  Star,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import FinanceChatbot from "../components/FinanceChatbot";
+import { useGamification } from "../context/GamificationContext";
+import {
+  XPBar,
+  AchievementBadge,
+} from "../components/GamificationElements";
+import { ACHIEVEMENTS } from "../context/GamificationContext";
+import StreakDisplay from "../components/StreakDisplay";
+import DailyGoalProgress from "../components/DailyGoalProgress";
+import confetti from "canvas-confetti";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    "Content-Type": "application/json",
+  },
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -42,9 +53,9 @@ const LearnPage = () => {
   const [currentMilestone, setCurrentMilestone] = useState(0);
   const { user, logout } = useAuth();
 
-  const { 
-    addXP, 
-    unlockAchievement, 
+  const {
+    addXP,
+    unlockAchievement,
     completeChapter,
     achievements,
     isChapterCompleted,
@@ -53,30 +64,19 @@ const LearnPage = () => {
     totalTokens,
     setTotalTokens,
     unlockAchievementsSequentially,
-    setChapterProgress
+    setChapterProgress,
   } = useGamification();
 
-  // Save progress to database whenever completedChapters changes
   useEffect(() => {
     const saveProgress = async () => {
       try {
-        console.log('Saving progress:', {
+        await api.post("/user/progress", {
           completedChapters: Array.from(completedChapters),
           chapterProgress,
-          totalTokens
+          totalTokens,
         });
-
-        const response = await api.post('/user/progress', {
-          completedChapters: Array.from(completedChapters),
-          chapterProgress,
-          totalTokens
-        });
-
-        console.log('Progress saved successfully:', response.data);
       } catch (error) {
-        console.error('Error saving progress:', error.response?.data || error.message);
-        // Show error notification to user
-        alert('Failed to save progress. Please try again.');
+        toast.error("Failed to save progress. Please try again.");
       }
     };
 
@@ -85,127 +85,125 @@ const LearnPage = () => {
     }
   }, [completedChapters, chapterProgress, totalTokens]);
 
-  // Update streak in database
   useEffect(() => {
     const updateStreak = async () => {
       try {
-        const response = await api.get('/user/stats');
+        const response = await api.get("/user/stats");
         const currentStreak = response.data.streak || 0;
-        
+
         if (currentStreak !== 6) {
-          await api.post('/user/update-streak', { streak: 6 });
-          // Add 50 tokens for the streak
+          await api.post("/user/update-streak", { streak: 6 });
           const streakTokens = 50;
-          setTotalTokens(prev => prev + streakTokens);
+          setTotalTokens((prev) => prev + streakTokens);
         }
       } catch (error) {
-        console.error('Error updating streak:', error);
       }
     };
 
     updateStreak();
   }, []);
 
-  // Check achievements
   useEffect(() => {
     const checkAchievements = async () => {
       try {
-        // Check First Lesson Achievement
         if (completedChapters.size > 0) {
-          await unlockAchievement('FIRST_LESSON');
+          await unlockAchievement("FIRST_LESSON");
         }
 
-        // Check Perfect Quiz Achievement
-        const hasCompletedPerfectQuiz = Object.values(chapterProgress).some(progress => progress === 100);
+        const hasCompletedPerfectQuiz = Object.values(chapterProgress).some(
+          (progress) => progress === 100
+        );
         if (hasCompletedPerfectQuiz) {
-          await unlockAchievement('PERFECT_QUIZ');
+          await unlockAchievement("PERFECT_QUIZ");
         }
 
-        // Check Token Master Achievement
         if (totalTokens >= 1000) {
-          await unlockAchievement('TOKEN_MASTER');
+          await unlockAchievement("TOKEN_MASTER");
         }
 
-        // Check Week Streak Achievement
-        const response = await api.get('/user/stats');
+        const response = await api.get("/user/stats");
         const currentStreak = response.data.streak || 0;
         if (currentStreak >= 7) {
-          await unlockAchievement('WEEK_STREAK');
+          await unlockAchievement("WEEK_STREAK");
         }
       } catch (error) {
-        console.error('Error checking achievements:', error);
       }
     };
 
     checkAchievements();
   }, [completedChapters, chapterProgress, totalTokens, unlockAchievement]);
 
-  // Add this function to check for milestones
   const checkMilestone = (progress) => {
     const milestones = [0, 20, 40, 60, 80];
-    const newMilestone = milestones.find(m => progress >= m && progress < m + 20);
-    
-    console.log('Progress:', progress);
-    console.log('Current Milestone:', currentMilestone);
-    console.log('New Milestone:', newMilestone);
-    
+    const newMilestone = milestones.find(
+      (m) => progress >= m && progress < m + 20
+    );
+
     if (newMilestone !== undefined && newMilestone !== currentMilestone) {
-      console.log('Setting new milestone:', newMilestone);
       setCurrentMilestone(newMilestone);
       setShowMilestone(true);
-      // Trigger confetti
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
     }
   };
 
-  // Add this effect to check for milestones when progress changes
   useEffect(() => {
-    const progress = Math.round((modules.reduce((acc, module) => 
-      acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-    ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100);
-    
+    const progress = Math.round(
+      (modules.reduce(
+        (acc, module) =>
+          acc +
+          module.chapters.filter((chapter) => completedChapters.has(chapter))
+            .length,
+        0
+      ) /
+        modules.reduce((acc, module) => acc + module.chapters.length, 0)) *
+        100
+    );
+
     checkMilestone(progress);
   }, [completedChapters, currentMilestone]);
 
-  // Chapter content mapping
   const chapterContent = {
     "The Need to Invest": {
-      introduction: "Understanding why investment is crucial for financial growth",
+      introduction:
+        "Understanding why investment is crucial for financial growth",
       sections: [
         {
           title: "Why Invest?",
-          content: "Investing is essential for wealth creation and beating inflation. Your money should work for you to achieve long-term financial goals.",
+          content:
+            "Investing is essential for wealth creation and beating inflation. Your money should work for you to achieve long-term financial goals.",
           keyPoints: [
             "Power of Compounding",
             "Beating Inflation",
             "Creating Passive Income",
-            "Building Long-term Wealth"
-          ]
+            "Building Long-term Wealth",
+          ],
         },
         {
           title: "Types of Investments",
-          content: "Different investment vehicles serve different purposes. Understanding them is key to making informed decisions.",
+          content:
+            "Different investment vehicles serve different purposes. Understanding them is key to making informed decisions.",
           keyPoints: [
             "Stocks and Equities",
             "Fixed Income Securities",
             "Mutual Funds",
-            "Real Estate"
-          ]
+            "Real Estate",
+          ],
         },
         {
           title: "Risk and Return",
-          content: "Every investment carries some level of risk. Higher returns typically come with higher risks.",
+          content:
+            "Every investment carries some level of risk. Higher returns typically come with higher risks.",
           keyPoints: [
             "Risk Assessment",
             "Return Expectations",
             "Risk Management",
-            "Portfolio Diversification"
-          ]
-        }
+            "Portfolio Diversification",
+          ],
+        },
       ],
       quiz: [
         {
@@ -214,67 +212,72 @@ const LearnPage = () => {
             "Earning interest on interest",
             "Fixed returns",
             "No risk involved",
-            "Immediate profits"
+            "Immediate profits",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Regulators & Participants": {
       introduction: "Understanding the key players in the financial markets",
       sections: [
         {
           title: "Market Regulators",
-          content: "Financial markets are overseen by regulatory bodies to ensure fair trading and protect investors.",
+          content:
+            "Financial markets are overseen by regulatory bodies to ensure fair trading and protect investors.",
           keyPoints: [
             "SEBI (Securities and Exchange Board of India)",
             "RBI (Reserve Bank of India)",
             "Stock Exchanges",
-            "Regulatory Framework"
-          ]
+            "Regulatory Framework",
+          ],
         },
         {
           title: "Market Participants",
-          content: "Various entities play different roles in making markets function efficiently.",
+          content:
+            "Various entities play different roles in making markets function efficiently.",
           keyPoints: [
             "Investors and Traders",
             "Brokers and Sub-brokers",
             "Market Makers",
-            "Institutional Investors"
-          ]
-        }
+            "Institutional Investors",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which organization is the primary regulator of Indian stock markets?",
+          question:
+            "Which organization is the primary regulator of Indian stock markets?",
           options: ["SEBI", "RBI", "NSE", "BSE"],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Stock Markets Index": {
       introduction: "Understanding market indices and their significance",
       sections: [
         {
           title: "What is a Market Index?",
-          content: "A market index is a measurement of the value of a section of the stock market, used as a benchmark for market performance.",
+          content:
+            "A market index is a measurement of the value of a section of the stock market, used as a benchmark for market performance.",
           keyPoints: [
             "Index Calculation",
             "Types of Indices",
             "Index Components",
-            "Market Representation"
-          ]
+            "Market Representation",
+          ],
         },
         {
           title: "Major Indian Indices",
-          content: "India has several important market indices tracking different segments of the market.",
+          content:
+            "India has several important market indices tracking different segments of the market.",
           keyPoints: [
             "NIFTY 50",
             "SENSEX",
             "Sector Indices",
-            "Market Cap Indices"
-          ]
-        }
+            "Market Cap Indices",
+          ],
+        },
       ],
       quiz: [
         {
@@ -283,67 +286,74 @@ const LearnPage = () => {
             "50 most liquid Indian securities",
             "50 smallest companies",
             "All BSE companies",
-            "Only IT companies"
+            "Only IT companies",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Trading & Settlement": {
-      introduction: "Understanding the mechanics of trading and settlement in stock markets",
+      introduction:
+        "Understanding the mechanics of trading and settlement in stock markets",
       sections: [
         {
           title: "Trading Mechanisms",
-          content: "Modern stock markets use electronic trading systems for efficient and transparent price discovery.",
+          content:
+            "Modern stock markets use electronic trading systems for efficient and transparent price discovery.",
           keyPoints: [
             "Order Types",
             "Trading Sessions",
             "Price Discovery",
-            "Market Depth"
-          ]
+            "Market Depth",
+          ],
         },
         {
           title: "Settlement Process",
-          content: "The process of completing a trade involves several steps and participants.",
+          content:
+            "The process of completing a trade involves several steps and participants.",
           keyPoints: [
             "T+2 Settlement",
             "Clearing Houses",
             "DEMAT Accounts",
-            "Fund Settlement"
-          ]
-        }
+            "Fund Settlement",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "What is the current settlement cycle in Indian stock markets?",
+          question:
+            "What is the current settlement cycle in Indian stock markets?",
           options: ["T+2", "T+5", "T+1", "T+3"],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Risk Management & Trading Psychology": {
-      introduction: "Understanding risk management principles and the psychology of trading",
+      introduction:
+        "Understanding risk management principles and the psychology of trading",
       sections: [
         {
           title: "Risk Management",
-          content: "Successful trading requires proper risk management techniques and discipline.",
+          content:
+            "Successful trading requires proper risk management techniques and discipline.",
           keyPoints: [
             "Position Sizing",
             "Stop Loss Orders",
             "Risk-Reward Ratio",
-            "Portfolio Diversification"
-          ]
+            "Portfolio Diversification",
+          ],
         },
         {
           title: "Trading Psychology",
-          content: "Psychology plays a crucial role in trading success or failure.",
+          content:
+            "Psychology plays a crucial role in trading success or failure.",
           keyPoints: [
             "Emotional Control",
             "Discipline",
             "Common Biases",
-            "Trading Plan"
-          ]
-        }
+            "Trading Plan",
+          ],
+        },
       ],
       quiz: [
         {
@@ -352,35 +362,38 @@ const LearnPage = () => {
             "1-2% of capital",
             "25% of capital",
             "50% of capital",
-            "10-15% of capital"
+            "10-15% of capital",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Candlesticks Patterns": {
-      introduction: "Understanding candlestick patterns and their significance in technical analysis",
+      introduction:
+        "Understanding candlestick patterns and their significance in technical analysis",
       sections: [
         {
           title: "Basic Candlestick Structure",
-          content: "Candlesticks are visual representations of price movements over a specific time period, showing opening, closing, high, and low prices.",
+          content:
+            "Candlesticks are visual representations of price movements over a specific time period, showing opening, closing, high, and low prices.",
           keyPoints: [
             "Body and Wicks",
             "Bullish vs Bearish Candles",
             "Time Periods",
-            "Price Action"
-          ]
+            "Price Action",
+          ],
         },
         {
           title: "Common Patterns",
-          content: "Various candlestick patterns provide insights into potential market movements and trend reversals.",
+          content:
+            "Various candlestick patterns provide insights into potential market movements and trend reversals.",
           keyPoints: [
             "Doji",
             "Hammer and Shooting Star",
             "Engulfing Patterns",
-            "Morning and Evening Stars"
-          ]
-        }
+            "Morning and Evening Stars",
+          ],
+        },
       ],
       quiz: [
         {
@@ -389,35 +402,38 @@ const LearnPage = () => {
             "Market indecision",
             "Strong uptrend",
             "Strong downtrend",
-            "Market closure"
+            "Market closure",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Support & Resistance": {
-      introduction: "Understanding key price levels that influence market movements",
+      introduction:
+        "Understanding key price levels that influence market movements",
       sections: [
         {
           title: "Support Levels",
-          content: "Support levels are price points where buying pressure is expected to prevent further price declines.",
+          content:
+            "Support levels are price points where buying pressure is expected to prevent further price declines.",
           keyPoints: [
             "Price Floor",
             "Buying Pressure",
             "Multiple Touches",
-            "Breakdown"
-          ]
+            "Breakdown",
+          ],
         },
         {
           title: "Resistance Levels",
-          content: "Resistance levels are price points where selling pressure is expected to prevent further price increases.",
+          content:
+            "Resistance levels are price points where selling pressure is expected to prevent further price increases.",
           keyPoints: [
             "Price Ceiling",
             "Selling Pressure",
             "Multiple Touches",
-            "Breakout"
-          ]
-        }
+            "Breakout",
+          ],
+        },
       ],
       quiz: [
         {
@@ -426,72 +442,69 @@ const LearnPage = () => {
             "It becomes a resistance level",
             "Price stays at that level",
             "It remains a support level",
-            "Market closes"
+            "Market closes",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Moving Averages": {
-      introduction: "Understanding different types of moving averages and their applications",
+      introduction:
+        "Understanding different types of moving averages and their applications",
       sections: [
         {
           title: "Types of Moving Averages",
-          content: "Moving averages help smooth out price data to identify trends and potential support/resistance levels.",
+          content:
+            "Moving averages help smooth out price data to identify trends and potential support/resistance levels.",
           keyPoints: [
             "Simple Moving Average (SMA)",
             "Exponential Moving Average (EMA)",
             "Weighted Moving Average (WMA)",
-            "Moving Average Periods"
-          ]
+            "Moving Average Periods",
+          ],
         },
         {
           title: "Moving Average Applications",
-          content: "Moving averages can be used to identify trends, generate signals, and determine support/resistance levels.",
+          content:
+            "Moving averages can be used to identify trends, generate signals, and determine support/resistance levels.",
           keyPoints: [
             "Trend Identification",
             "Crossover Signals",
             "Support/Resistance",
-            "Multiple Timeframes"
-          ]
-        }
+            "Multiple Timeframes",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which moving average is more responsive to recent price changes?",
+          question:
+            "Which moving average is more responsive to recent price changes?",
           options: [
             "Exponential Moving Average",
             "Simple Moving Average",
             "Weighted Moving Average",
-            "All are equally responsive"
+            "All are equally responsive",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Indicators & Oscillators": {
-      introduction: "Understanding technical indicators and oscillators for market analysis",
+      introduction:
+        "Understanding technical indicators and oscillators for market analysis",
       sections: [
         {
           title: "Technical Indicators",
-          content: "Technical indicators help analyze market trends, momentum, and potential reversals.",
-          keyPoints: [
-            "MACD",
-            "RSI",
-            "Bollinger Bands",
-            "Volume Indicators"
-          ]
+          content:
+            "Technical indicators help analyze market trends, momentum, and potential reversals.",
+          keyPoints: ["MACD", "RSI", "Bollinger Bands", "Volume Indicators"],
         },
         {
           title: "Oscillators",
-          content: "Oscillators help identify overbought and oversold conditions in the market.",
-          keyPoints: [
-            "Stochastic Oscillator",
-            "RSI",
-            "CCI",
-            "Williams %R"
-          ]
-        }
+          content:
+            "Oscillators help identify overbought and oversold conditions in the market.",
+          keyPoints: ["Stochastic Oscillator", "RSI", "CCI", "Williams %R"],
+        },
       ],
       quiz: [
         {
@@ -500,14 +513,15 @@ const LearnPage = () => {
             "Overbought condition",
             "Oversold condition",
             "Strong uptrend",
-            "Market closure"
+            "Market closure",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Chart Patterns": {
-      introduction: "Understanding common chart patterns and their implications",
+      introduction:
+        "Understanding common chart patterns and their implications",
       sections: [
         {
           title: "Continuation Patterns",
@@ -516,8 +530,8 @@ const LearnPage = () => {
             "Triangles",
             "Flags and Pennants",
             "Wedges",
-            "Rectangles"
-          ]
+            "Rectangles",
+          ],
         },
         {
           title: "Reversal Patterns",
@@ -526,46 +540,50 @@ const LearnPage = () => {
             "Head and Shoulders",
             "Double Tops/Bottoms",
             "Triple Tops/Bottoms",
-            "Rounding Patterns"
-          ]
-        }
+            "Rounding Patterns",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "What does a head and shoulders pattern typically indicate?",
+          question:
+            "What does a head and shoulders pattern typically indicate?",
           options: [
             "Bearish reversal",
             "Bullish continuation",
             "Market consolidation",
-            "No specific signal"
+            "No specific signal",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "The IPO Markets": {
-      introduction: "Understanding Initial Public Offerings and their significance",
+      introduction:
+        "Understanding Initial Public Offerings and their significance",
       sections: [
         {
           title: "IPO Process",
-          content: "The process through which private companies become publicly traded entities.",
+          content:
+            "The process through which private companies become publicly traded entities.",
           keyPoints: [
             "Company Preparation",
             "Regulatory Requirements",
             "Underwriting",
-            "Pricing and Allocation"
-          ]
+            "Pricing and Allocation",
+          ],
         },
         {
           title: "IPO Investment",
-          content: "Key considerations for investing in IPOs and evaluating new listings.",
+          content:
+            "Key considerations for investing in IPOs and evaluating new listings.",
           keyPoints: [
             "Prospectus Analysis",
             "Valuation Metrics",
             "Lock-up Periods",
-            "Risk Assessment"
-          ]
-        }
+            "Risk Assessment",
+          ],
+        },
       ],
       quiz: [
         {
@@ -574,14 +592,15 @@ const LearnPage = () => {
             "Period when insiders cannot sell shares",
             "Time before IPO launch",
             "Trading suspension period",
-            "Registration period"
+            "Registration period",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Understanding Annual Reports": {
-      introduction: "Learning to analyze company financial statements and annual reports",
+      introduction:
+        "Learning to analyze company financial statements and annual reports",
       sections: [
         {
           title: "Key Financial Statements",
@@ -590,56 +609,50 @@ const LearnPage = () => {
             "Balance Sheet",
             "Income Statement",
             "Cash Flow Statement",
-            "Notes to Accounts"
-          ]
+            "Notes to Accounts",
+          ],
         },
         {
           title: "Management Discussion",
-          content: "Analyzing management's perspective on company performance and future outlook.",
+          content:
+            "Analyzing management's perspective on company performance and future outlook.",
           keyPoints: [
             "Business Overview",
             "Performance Analysis",
             "Risk Factors",
-            "Future Plans"
-          ]
-        }
+            "Future Plans",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which financial statement shows a company's assets and liabilities?",
+          question:
+            "Which financial statement shows a company's assets and liabilities?",
           options: [
             "Balance Sheet",
             "Income Statement",
             "Cash Flow Statement",
-            "Notes to Accounts"
+            "Notes to Accounts",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Financial Ratios": {
       introduction: "Understanding key financial ratios for company analysis",
       sections: [
         {
           title: "Profitability Ratios",
-          content: "Ratios that measure a company's ability to generate profits.",
-          keyPoints: [
-            "ROE",
-            "ROA",
-            "Profit Margins",
-            "Operating Efficiency"
-          ]
+          content:
+            "Ratios that measure a company's ability to generate profits.",
+          keyPoints: ["ROE", "ROA", "Profit Margins", "Operating Efficiency"],
         },
         {
           title: "Valuation Ratios",
-          content: "Ratios used to evaluate a company's stock price relative to its financial performance.",
-          keyPoints: [
-            "P/E Ratio",
-            "P/B Ratio",
-            "EV/EBITDA",
-            "Dividend Yield"
-          ]
-        }
+          content:
+            "Ratios used to evaluate a company's stock price relative to its financial performance.",
+          keyPoints: ["P/E Ratio", "P/B Ratio", "EV/EBITDA", "Dividend Yield"],
+        },
       ],
       quiz: [
         {
@@ -648,35 +661,37 @@ const LearnPage = () => {
             "High growth expectations",
             "Poor performance",
             "Low market value",
-            "High debt"
+            "High debt",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Equity Research": {
       introduction: "Understanding the process of equity research and analysis",
       sections: [
         {
           title: "Research Process",
-          content: "The systematic approach to analyzing stocks and making investment decisions.",
+          content:
+            "The systematic approach to analyzing stocks and making investment decisions.",
           keyPoints: [
             "Data Collection",
             "Analysis Methods",
             "Report Writing",
-            "Recommendations"
-          ]
+            "Recommendations",
+          ],
         },
         {
           title: "Research Reports",
-          content: "Understanding different types of research reports and their components.",
+          content:
+            "Understanding different types of research reports and their components.",
           keyPoints: [
             "Initiation Reports",
             "Update Reports",
             "Earnings Reviews",
-            "Target Price Updates"
-          ]
-        }
+            "Target Price Updates",
+          ],
+        },
       ],
       quiz: [
         {
@@ -685,35 +700,38 @@ const LearnPage = () => {
             "Provide investment recommendations",
             "Market speculation",
             "Company promotion",
-            "Regulatory compliance"
+            "Regulatory compliance",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Company Analysis": {
-      introduction: "Comprehensive analysis of companies for investment decisions",
+      introduction:
+        "Comprehensive analysis of companies for investment decisions",
       sections: [
         {
           title: "Business Analysis",
-          content: "Understanding a company's business model and competitive position.",
+          content:
+            "Understanding a company's business model and competitive position.",
           keyPoints: [
             "Business Model",
             "Competitive Advantage",
             "Industry Position",
-            "Growth Strategy"
-          ]
+            "Growth Strategy",
+          ],
         },
         {
           title: "Risk Analysis",
-          content: "Identifying and evaluating various risks associated with the company.",
+          content:
+            "Identifying and evaluating various risks associated with the company.",
           keyPoints: [
             "Business Risks",
             "Financial Risks",
             "Regulatory Risks",
-            "Market Risks"
-          ]
-        }
+            "Market Risks",
+          ],
+        },
       ],
       quiz: [
         {
@@ -722,35 +740,38 @@ const LearnPage = () => {
             "Unique strength over competitors",
             "Market share",
             "Revenue growth",
-            "Profit margin"
+            "Profit margin",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Introduction to Mutual Funds": {
-      introduction: "Understanding the basics of mutual funds and their role in investment",
+      introduction:
+        "Understanding the basics of mutual funds and their role in investment",
       sections: [
         {
           title: "What are Mutual Funds?",
-          content: "Mutual funds are investment vehicles that pool money from multiple investors to invest in a diversified portfolio of securities.",
+          content:
+            "Mutual funds are investment vehicles that pool money from multiple investors to invest in a diversified portfolio of securities.",
           keyPoints: [
             "Pooled Investment",
             "Professional Management",
             "Diversification",
-            "Regulatory Framework"
-          ]
+            "Regulatory Framework",
+          ],
         },
         {
           title: "Benefits of Mutual Funds",
-          content: "Mutual funds offer several advantages to investors including diversification, professional management, and liquidity.",
+          content:
+            "Mutual funds offer several advantages to investors including diversification, professional management, and liquidity.",
           keyPoints: [
             "Risk Diversification",
             "Professional Management",
             "Liquidity",
-            "Affordable Investment"
-          ]
-        }
+            "Affordable Investment",
+          ],
+        },
       ],
       quiz: [
         {
@@ -759,35 +780,37 @@ const LearnPage = () => {
             "Diversification",
             "Guaranteed Returns",
             "No Risk",
-            "Instant Liquidity"
+            "Instant Liquidity",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Types of Mutual Funds": {
       introduction: "Understanding different categories of mutual funds",
       sections: [
         {
           title: "Based on Asset Class",
-          content: "Mutual funds can be categorized based on the type of securities they invest in.",
+          content:
+            "Mutual funds can be categorized based on the type of securities they invest in.",
           keyPoints: [
             "Equity Funds",
             "Debt Funds",
             "Balanced Funds",
-            "Money Market Funds"
-          ]
+            "Money Market Funds",
+          ],
         },
         {
           title: "Based on Investment Style",
-          content: "Funds can also be categorized based on their investment approach and objectives.",
+          content:
+            "Funds can also be categorized based on their investment approach and objectives.",
           keyPoints: [
             "Growth Funds",
             "Value Funds",
             "Index Funds",
-            "Sector Funds"
-          ]
-        }
+            "Sector Funds",
+          ],
+        },
       ],
       quiz: [
         {
@@ -796,135 +819,147 @@ const LearnPage = () => {
             "Equity Fund",
             "Debt Fund",
             "Money Market Fund",
-            "Liquid Fund"
+            "Liquid Fund",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Understanding SIP": {
-      introduction: "Learning about Systematic Investment Plans and their benefits",
+      introduction:
+        "Learning about Systematic Investment Plans and their benefits",
       sections: [
         {
           title: "What is SIP?",
-          content: "SIP is an investment strategy that allows investors to invest a fixed amount regularly in mutual funds.",
+          content:
+            "SIP is an investment strategy that allows investors to invest a fixed amount regularly in mutual funds.",
           keyPoints: [
             "Regular Investment",
             "Rupee Cost Averaging",
             "Power of Compounding",
-            "Flexibility"
-          ]
+            "Flexibility",
+          ],
         },
         {
           title: "Benefits of SIP",
-          content: "SIP offers several advantages including disciplined investing, rupee cost averaging, and the power of compounding.",
+          content:
+            "SIP offers several advantages including disciplined investing, rupee cost averaging, and the power of compounding.",
           keyPoints: [
             "Disciplined Investing",
             "Rupee Cost Averaging",
             "Compounding Benefits",
-            "Flexible Investment"
-          ]
-        }
+            "Flexible Investment",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "What is the main advantage of SIP over lump sum investment?",
+          question:
+            "What is the main advantage of SIP over lump sum investment?",
           options: [
             "Rupee Cost Averaging",
             "Higher Returns",
             "No Risk",
-            "Instant Liquidity"
+            "Instant Liquidity",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Fund Selection & Analysis": {
       introduction: "Learning how to select and analyze mutual funds",
       sections: [
         {
           title: "Fund Selection Criteria",
-          content: "Key factors to consider when selecting a mutual fund for investment.",
+          content:
+            "Key factors to consider when selecting a mutual fund for investment.",
           keyPoints: [
             "Investment Objective",
             "Past Performance",
             "Fund Manager",
-            "Expense Ratio"
-          ]
+            "Expense Ratio",
+          ],
         },
         {
           title: "Fund Analysis Tools",
-          content: "Various metrics and tools used to analyze mutual fund performance.",
+          content:
+            "Various metrics and tools used to analyze mutual fund performance.",
           keyPoints: [
             "NAV",
             "Returns",
             "Risk Metrics",
-            "Portfolio Composition"
-          ]
-        }
+            "Portfolio Composition",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which factor is most important when selecting a mutual fund?",
+          question:
+            "Which factor is most important when selecting a mutual fund?",
           options: [
             "Investment Objective",
             "Past Performance",
             "Fund Size",
-            "Marketing Campaign"
+            "Marketing Campaign",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Taxation & Regulations": {
-      introduction: "Understanding tax implications and regulations for mutual fund investments",
+      introduction:
+        "Understanding tax implications and regulations for mutual fund investments",
       sections: [
         {
           title: "Taxation Rules",
-          content: "Tax implications for different types of mutual funds and investment periods.",
+          content:
+            "Tax implications for different types of mutual funds and investment periods.",
           keyPoints: [
             "Equity Fund Taxation",
             "Debt Fund Taxation",
             "STCG vs LTCG",
-            "Tax Benefits"
-          ]
+            "Tax Benefits",
+          ],
         },
         {
           title: "Regulatory Framework",
-          content: "Regulations governing mutual funds and investor protection.",
+          content:
+            "Regulations governing mutual funds and investor protection.",
           keyPoints: [
             "SEBI Regulations",
             "AMFI Guidelines",
             "Investor Protection",
-            "Transparency"
-          ]
-        }
+            "Transparency",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "What is the tax treatment for long-term capital gains in equity funds?",
+          question:
+            "What is the tax treatment for long-term capital gains in equity funds?",
           options: [
             "10% above 1 lakh",
             "15% above 1 lakh",
             "20% with indexation",
-            "No tax"
+            "No tax",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Options Basics": {
       introduction: "Understanding the fundamentals of options trading",
       sections: [
         {
           title: "What are Options?",
-          content: "Options are financial derivatives that give the right but not the obligation to buy or sell an asset.",
+          content:
+            "Options are financial derivatives that give the right but not the obligation to buy or sell an asset.",
           keyPoints: [
             "Call Options",
             "Put Options",
             "Strike Price",
-            "Expiration Date"
-          ]
+            "Expiration Date",
+          ],
         },
         {
           title: "Options Terminology",
@@ -933,35 +968,26 @@ const LearnPage = () => {
             "Premium",
             "Intrinsic Value",
             "Time Value",
-            "In-the-Money"
-          ]
-        }
+            "In-the-Money",
+          ],
+        },
       ],
       quiz: [
         {
           question: "What is the maximum loss for an option buyer?",
-          options: [
-            "Premium paid",
-            "Unlimited",
-            "Strike price",
-            "Stock price"
-          ],
-          correct: 0
-        }
-      ]
+          options: ["Premium paid", "Unlimited", "Strike price", "Stock price"],
+          correct: 0,
+        },
+      ],
     },
     "Options Greeks": {
       introduction: "Understanding the Greeks in options trading",
       sections: [
         {
           title: "Key Greeks",
-          content: "The Greeks measure different factors that affect option prices.",
-          keyPoints: [
-            "Delta",
-            "Gamma",
-            "Theta",
-            "Vega"
-          ]
+          content:
+            "The Greeks measure different factors that affect option prices.",
+          keyPoints: ["Delta", "Gamma", "Theta", "Vega"],
         },
         {
           title: "Greek Applications",
@@ -970,59 +996,46 @@ const LearnPage = () => {
             "Risk Assessment",
             "Position Management",
             "Strategy Selection",
-            "Portfolio Hedging"
-          ]
-        }
+            "Portfolio Hedging",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which Greek measures the rate of change in option price with respect to time?",
-          options: [
-            "Theta",
-            "Delta",
-            "Gamma",
-            "Vega"
-          ],
-          correct: 0
-        }
-      ]
+          question:
+            "Which Greek measures the rate of change in option price with respect to time?",
+          options: ["Theta", "Delta", "Gamma", "Vega"],
+          correct: 0,
+        },
+      ],
     },
     "Options Strategies": {
       introduction: "Learning various options trading strategies",
       sections: [
         {
           title: "Basic Strategies",
-          content: "Common options trading strategies for different market conditions.",
+          content:
+            "Common options trading strategies for different market conditions.",
           keyPoints: [
             "Long Call",
             "Long Put",
             "Covered Call",
-            "Protective Put"
-          ]
+            "Protective Put",
+          ],
         },
         {
           title: "Advanced Strategies",
           content: "Complex options strategies for experienced traders.",
-          keyPoints: [
-            "Straddles",
-            "Strangles",
-            "Butterflies",
-            "Iron Condors"
-          ]
-        }
+          keyPoints: ["Straddles", "Strangles", "Butterflies", "Iron Condors"],
+        },
       ],
       quiz: [
         {
           question: "Which strategy is best for a neutral market outlook?",
-          options: [
-            "Iron Condor",
-            "Long Call",
-            "Long Put",
-            "Covered Call"
-          ],
-          correct: 0
-        }
-      ]
+          options: ["Iron Condor", "Long Call", "Long Put", "Covered Call"],
+          correct: 0,
+        },
+      ],
     },
     "Risk Management in Options": {
       introduction: "Understanding risk management in options trading",
@@ -1034,8 +1047,8 @@ const LearnPage = () => {
             "Position Sizing",
             "Stop Loss",
             "Risk-Reward Ratio",
-            "Portfolio Exposure"
-          ]
+            "Portfolio Exposure",
+          ],
         },
         {
           title: "Risk Mitigation",
@@ -1044,9 +1057,9 @@ const LearnPage = () => {
             "Diversification",
             "Hedging",
             "Position Limits",
-            "Exit Strategies"
-          ]
-        }
+            "Exit Strategies",
+          ],
+        },
       ],
       quiz: [
         {
@@ -1055,11 +1068,11 @@ const LearnPage = () => {
             "Risk Management",
             "Strategy Selection",
             "Market Timing",
-            "Position Sizing"
+            "Position Sizing",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Options Trading Examples": {
       introduction: "Real-world examples of options trading strategies",
@@ -1071,8 +1084,8 @@ const LearnPage = () => {
             "Long Call Example",
             "Long Put Example",
             "Covered Call Example",
-            "Protective Put Example"
-          ]
+            "Protective Put Example",
+          ],
         },
         {
           title: "Advanced Strategy Examples",
@@ -1081,35 +1094,37 @@ const LearnPage = () => {
             "Straddle Example",
             "Strangle Example",
             "Butterfly Example",
-            "Iron Condor Example"
-          ]
-        }
+            "Iron Condor Example",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "In which market condition is a straddle strategy most effective?",
+          question:
+            "In which market condition is a straddle strategy most effective?",
           options: [
             "High Volatility",
             "Low Volatility",
             "Strong Trend",
-            "Sideways Market"
+            "Sideways Market",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Futures Basics": {
       introduction: "Understanding the fundamentals of futures trading",
       sections: [
         {
           title: "What are Futures?",
-          content: "Futures are standardized contracts to buy or sell an asset at a predetermined price and date.",
+          content:
+            "Futures are standardized contracts to buy or sell an asset at a predetermined price and date.",
           keyPoints: [
             "Contract Specifications",
             "Margin Requirements",
             "Settlement",
-            "Price Discovery"
-          ]
+            "Price Discovery",
+          ],
         },
         {
           title: "Futures vs Options",
@@ -1118,9 +1133,9 @@ const LearnPage = () => {
             "Obligation",
             "Risk Profile",
             "Pricing",
-            "Trading Mechanics"
-          ]
-        }
+            "Trading Mechanics",
+          ],
+        },
       ],
       quiz: [
         {
@@ -1129,11 +1144,11 @@ const LearnPage = () => {
             "Obligation to trade",
             "Contract size",
             "Trading hours",
-            "Settlement process"
+            "Settlement process",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Futures Pricing": {
       introduction: "Understanding how futures prices are determined",
@@ -1145,8 +1160,8 @@ const LearnPage = () => {
             "Cost of Carry",
             "Spot-Futures Parity",
             "Basis",
-            "Contango and Backwardation"
-          ]
+            "Contango and Backwardation",
+          ],
         },
         {
           title: "Price Factors",
@@ -1155,22 +1170,18 @@ const LearnPage = () => {
             "Spot Price",
             "Interest Rates",
             "Storage Costs",
-            "Dividends"
-          ]
-        }
+            "Dividends",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "What is the relationship between spot price and futures price?",
-          options: [
-            "Cost of Carry",
-            "Random",
-            "Inverse",
-            "No relationship"
-          ],
-          correct: 0
-        }
-      ]
+          question:
+            "What is the relationship between spot price and futures price?",
+          options: ["Cost of Carry", "Random", "Inverse", "No relationship"],
+          correct: 0,
+        },
+      ],
     },
     "Futures Strategies": {
       introduction: "Learning various futures trading strategies",
@@ -1182,8 +1193,8 @@ const LearnPage = () => {
             "Long Futures",
             "Short Futures",
             "Spread Trading",
-            "Hedging"
-          ]
+            "Hedging",
+          ],
         },
         {
           title: "Advanced Strategies",
@@ -1192,9 +1203,9 @@ const LearnPage = () => {
             "Calendar Spreads",
             "Inter-Exchange Spreads",
             "Cross-Commodity Spreads",
-            "Arbitrage"
-          ]
-        }
+            "Arbitrage",
+          ],
+        },
       ],
       quiz: [
         {
@@ -1203,11 +1214,11 @@ const LearnPage = () => {
             "Risk Management",
             "Speculation",
             "Arbitrage",
-            "Market Making"
+            "Market Making",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Hedging with Futures": {
       introduction: "Understanding how to use futures for hedging",
@@ -1219,8 +1230,8 @@ const LearnPage = () => {
             "Long Hedge",
             "Short Hedge",
             "Cross Hedge",
-            "Optimal Hedge Ratio"
-          ]
+            "Optimal Hedge Ratio",
+          ],
         },
         {
           title: "Hedging Applications",
@@ -1229,9 +1240,9 @@ const LearnPage = () => {
             "Portfolio Hedging",
             "Commodity Hedging",
             "Currency Hedging",
-            "Interest Rate Hedging"
-          ]
-        }
+            "Interest Rate Hedging",
+          ],
+        },
       ],
       quiz: [
         {
@@ -1240,11 +1251,11 @@ const LearnPage = () => {
             "Risk Reduction",
             "Profit Maximization",
             "Market Timing",
-            "Speculation"
+            "Speculation",
           ],
-          correct: 0
-        }
-      ]
+          correct: 0,
+        },
+      ],
     },
     "Futures Trading Examples": {
       introduction: "Real-world examples of futures trading",
@@ -1256,8 +1267,8 @@ const LearnPage = () => {
             "Long Position Example",
             "Short Position Example",
             "Spread Trade Example",
-            "Hedging Example"
-          ]
+            "Hedging Example",
+          ],
         },
         {
           title: "Advanced Trading Examples",
@@ -1266,23 +1277,24 @@ const LearnPage = () => {
             "Arbitrage Example",
             "Cross-Hedge Example",
             "Calendar Spread Example",
-            "Portfolio Hedge Example"
-          ]
-        }
+            "Portfolio Hedge Example",
+          ],
+        },
       ],
       quiz: [
         {
-          question: "Which type of futures trade is most suitable for a bullish market outlook?",
+          question:
+            "Which type of futures trade is most suitable for a bullish market outlook?",
           options: [
             "Long Futures",
             "Short Futures",
             "Calendar Spread",
-            "Cross Hedge"
+            "Cross Hedge",
           ],
-          correct: 0
-        }
-      ]
-    }
+          correct: 0,
+        },
+      ],
+    },
   };
 
   const modules = [
@@ -1297,8 +1309,8 @@ const LearnPage = () => {
         "Regulators & Participants",
         "Stock Markets Index",
         "Trading & Settlement",
-        "Risk Management & Trading Psychology"
-      ]
+        "Risk Management & Trading Psychology",
+      ],
     },
     {
       id: 2,
@@ -1311,8 +1323,8 @@ const LearnPage = () => {
         "Types of Mutual Funds",
         "Understanding SIP",
         "Fund Selection & Analysis",
-        "Taxation & Regulations"
-      ]
+        "Taxation & Regulations",
+      ],
     },
     {
       id: 3,
@@ -1325,8 +1337,8 @@ const LearnPage = () => {
         "Support & Resistance",
         "Moving Averages",
         "Indicators & Oscillators",
-        "Chart Patterns"
-      ]
+        "Chart Patterns",
+      ],
     },
     {
       id: 4,
@@ -1339,8 +1351,8 @@ const LearnPage = () => {
         "Understanding Annual Reports",
         "Financial Ratios",
         "Equity Research",
-        "Company Analysis"
-      ]
+        "Company Analysis",
+      ],
     },
     {
       id: 5,
@@ -1353,8 +1365,8 @@ const LearnPage = () => {
         "Options Greeks",
         "Options Strategies",
         "Risk Management in Options",
-        "Options Trading Examples"
-      ]
+        "Options Trading Examples",
+      ],
     },
     {
       id: 6,
@@ -1367,16 +1379,16 @@ const LearnPage = () => {
         "Futures Pricing",
         "Futures Strategies",
         "Hedging with Futures",
-        "Futures Trading Examples"
-      ]
-    }
+        "Futures Trading Examples",
+      ],
+    },
   ];
 
   const getColorClasses = (color) => {
     const colorMap = {
       purple: "bg-purple-100 text-purple-600 border-purple-200",
       blue: "bg-blue-100 text-blue-600 border-blue-200",
-      green: "bg-green-100 text-green-600 border-green-200"
+      green: "bg-green-100 text-green-600 border-green-200",
     };
     return colorMap[color] || colorMap.purple;
   };
@@ -1388,93 +1400,72 @@ const LearnPage = () => {
 
   const handleChapterComplete = async (chapter, score, total, tokens) => {
     try {
-      console.log('Completing chapter:', { chapter, score, total, tokens });
-
-      // Check if token exists
-      const token = localStorage.getItem('token');
-      console.log('Token at chapter complete:', token);
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
-      // Add XP for completing chapter and update daily progress
-      const xpEarned = Math.round((score / total) * 100) + 50; // Base XP + performance bonus
-      
-      // Save progress with retry logic
+      const xpEarned = Math.round((score / total) * 100) + 50;
+
       let retryCount = 0;
       const maxRetries = 3;
       let success = false;
 
       while (retryCount < maxRetries && !success) {
         try {
-          console.log(`Attempt ${retryCount + 1} to save progress`);
-          
           await addXP(xpEarned);
           await completeChapter(chapter);
-          setTotalTokens(prev => prev + tokens);
-          
-          // Update chapter progress to 100%
-          setChapterProgress(prev => ({
+          setTotalTokens((prev) => prev + tokens);
+
+          setChapterProgress((prev) => ({
             ...prev,
-            [chapter]: 100
+            [chapter]: 100,
           }));
-          
+
           success = true;
-          console.log('Progress saved successfully');
         } catch (error) {
-          console.error(`Attempt ${retryCount + 1} failed:`, error);
-          
-          // If unauthorized, redirect to login immediately
           if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            localStorage.removeItem("token");
+            window.location.href = "/login";
             return;
           }
-          
+
           retryCount++;
           if (retryCount === maxRetries) {
             throw error;
           }
-          // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+          );
         }
       }
-      
-      // Check and unlock achievements sequentially
+
       const achievementsToUnlock = [];
       const completedCount = completedChapters.size + 1;
 
-      // First Lesson Achievement
       if (completedCount === 1) {
-        achievementsToUnlock.push('FIRST_LESSON');
+        achievementsToUnlock.push("FIRST_LESSON");
       }
 
-      // Perfect Score Achievement
       if (score === total) {
-        achievementsToUnlock.push('PERFECT_QUIZ');
+        achievementsToUnlock.push("PERFECT_QUIZ");
       }
 
-      // Token Master Achievement
       if (totalTokens + tokens >= 1000) {
-        achievementsToUnlock.push('TOKEN_MASTER');
+        achievementsToUnlock.push("TOKEN_MASTER");
       }
 
-      // Week Streak Achievement - check if streak is 7 or more
-      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+      const currentStreak = parseInt(localStorage.getItem("streak") || "0");
       if (currentStreak >= 7) {
-        achievementsToUnlock.push('WEEK_STREAK');
+        achievementsToUnlock.push("WEEK_STREAK");
       }
 
-      // Unlock achievements sequentially if there are any to unlock
       if (achievementsToUnlock.length > 0) {
-        console.log('Unlocking achievements:', achievementsToUnlock);
         await unlockAchievementsSequentially(achievementsToUnlock);
       }
 
-      // Show completion notification
       showCompletionNotification(chapter, xpEarned, tokens);
 
-      // Close chapter content
       setTimeout(() => {
         setShowChapterContent(false);
         setShowQuiz(false);
@@ -1483,48 +1474,35 @@ const LearnPage = () => {
         setQuizAttempts({});
       }, 2000);
     } catch (error) {
-      console.error('Error completing chapter:', error);
       if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        localStorage.removeItem("token");
+        window.location.href = "/login";
       } else {
-        alert('There was an error saving your progress. Please try again.');
+        toast.error(
+          "There was an error saving your progress. Please try again."
+        );
       }
     }
   };
 
-  // Add this new function for showing completion notification
   const showCompletionNotification = (chapter, xp, tokens) => {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-white p-6 rounded-xl border-4 border-green-500 shadow-lg z-50 animate-slide-in';
-    notification.innerHTML = `
-      <div class="flex items-center space-x-4">
-        <div class="text-4xl">🎉</div>
+    toast.success(
+      <div className="flex items-center space-x-3">
+        <span className="text-2xl">🎉</span>
         <div>
-          <h3 class="font-bold text-lg text-green-600">Chapter Completed!</h3>
-          <p class="text-gray-600">You earned:</p>
-          <div class="flex items-center space-x-4 mt-2">
-            <div class="flex items-center">
-              <span class="text-yellow-500 font-bold">+${xp}</span>
-              <span class="ml-1">XP</span>
-            </div>
-            <div class="flex items-center">
-              <span class="text-purple-500 font-bold">+${tokens}</span>
-              <span class="ml-1">Tokens</span>
-            </div>
-          </div>
+          <p className="font-bold">Chapter Completed!</p>
+          <p className="text-sm">
+            +{xp} XP • +{tokens} Tokens
+          </p>
         </div>
-      </div>
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.classList.add('animate-slide-out');
-      setTimeout(() => notification.remove(), 500);
-    }, 3000);
+      </div>,
+      { autoClose: 4000 }
+    );
   };
 
   const getChapterButtonClasses = (moduleId, chapter) => {
-    const baseClasses = "w-full flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 text-left";
+    const baseClasses =
+      "w-full flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 text-left";
     const isCompleted = isChapterCompleted(chapter);
     const isSelected = selectedChapter === chapter;
 
@@ -1540,52 +1518,55 @@ const LearnPage = () => {
   };
 
   const handleAnswerSelect = (questionIndex, selectedOptionIndex) => {
-    setQuizAnswers(prev => ({
+    setQuizAnswers((prev) => ({
       ...prev,
-      [questionIndex]: selectedOptionIndex
+      [questionIndex]: selectedOptionIndex,
     }));
   };
 
   const handleQuizSubmit = (questionIndex) => {
-    const isCorrect = quizAnswers[questionIndex] === chapterContent[selectedChapter].quiz[questionIndex].correct;
-    
-    setSubmittedAnswers(prev => ({
+    const isCorrect =
+      quizAnswers[questionIndex] ===
+      chapterContent[selectedChapter].quiz[questionIndex].correct;
+
+    setSubmittedAnswers((prev) => ({
       ...prev,
-      [questionIndex]: true
+      [questionIndex]: true,
     }));
 
     // Track attempts for this question
-    setQuizAttempts(prev => ({
+    setQuizAttempts((prev) => ({
       ...prev,
-      [questionIndex]: (prev[questionIndex] || 0) + 1
+      [questionIndex]: (prev[questionIndex] || 0) + 1,
     }));
 
     // If answer is incorrect, we don't mark it as submitted so it can be retried
     if (!isCorrect) {
       setTimeout(() => {
-        setSubmittedAnswers(prev => ({
+        setSubmittedAnswers((prev) => ({
           ...prev,
-          [questionIndex]: false
+          [questionIndex]: false,
         }));
-        setQuizAnswers(prev => ({
+        setQuizAnswers((prev) => ({
           ...prev,
-          [questionIndex]: undefined
+          [questionIndex]: undefined,
         }));
       }, 2000); // Show the incorrect answer feedback for 2 seconds
     }
   };
 
   const getAnswerButtonClass = (questionIndex, optionIndex, correctIndex) => {
-    const baseClasses = "w-full text-left p-3 rounded-lg border transition-all duration-200";
+    const baseClasses =
+      "w-full text-left p-3 rounded-lg border transition-all duration-200";
     const isSelected = quizAnswers[questionIndex] === optionIndex;
     const isSubmitted = submittedAnswers[questionIndex];
     const isCorrect = quizAnswers[questionIndex] === correctIndex;
 
     if (!isSubmitted) {
       return `${baseClasses} ${
-        isSelected 
-          ? 'bg-purple-100 border-purple-500 text-purple-700' 
-          : 'bg-white border-gray-200 hover:bg-gray-50'
+        isSelected
+          ? "bg-purple-100 border-purple-500 text-purple-700"
+          : "bg-white border-gray-200 hover:bg-gray-50"
       }`;
     }
 
@@ -1597,7 +1578,9 @@ const LearnPage = () => {
       return `${baseClasses} bg-red-100 border-red-500 text-red-700`;
     }
 
-    return `${baseClasses} bg-white border-gray-200 ${isSubmitted ? 'opacity-50' : 'hover:bg-gray-50'}`;
+    return `${baseClasses} bg-white border-gray-200 ${
+      isSubmitted ? "opacity-50" : "hover:bg-gray-50"
+    }`;
   };
 
   return (
@@ -1626,39 +1609,74 @@ const LearnPage = () => {
         <div className="flex-1">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-800">Welcome back,</h2>
-            <h2 className="text-3xl font-bold text-[#E86A33]">{user?.name || 'Investor'}!</h2>
-            <p className="text-gray-600 mt-4 text-lg">How's your learning journey going?</p>
+            <h2 className="text-3xl font-bold text-[#E86A33]">
+              {user?.name || "Investor"}!
+            </h2>
+            <p className="text-gray-600 mt-4 text-lg">
+              How's your learning journey going?
+            </p>
           </div>
-          
+
           <div className="space-y-6">
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-              <h3 className="font-bold text-xl text-gray-800 mb-2">Your Progress</h3>
+              <h3 className="font-bold text-xl text-gray-800 mb-2">
+                Your Progress
+              </h3>
               <div className="relative">
                 <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-500 to-emerald-500 h-4 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.round((modules.reduce((acc, module) => 
-                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%` 
+                    style={{
+                      width: `${Math.round(
+                        (modules.reduce(
+                          (acc, module) =>
+                            acc +
+                            module.chapters.filter((chapter) =>
+                              completedChapters.has(chapter)
+                            ).length,
+                          0
+                        ) /
+                          modules.reduce(
+                            (acc, module) => acc + module.chapters.length,
+                            0
+                          )) *
+                          100
+                      )}%`,
                     }}
                   ></div>
                 </div>
                 <p className="text-sm text-gray-600 mt-2 text-right">
-                  {Math.round((modules.reduce((acc, module) => 
-                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}% Complete
+                  {Math.round(
+                    (modules.reduce(
+                      (acc, module) =>
+                        acc +
+                        module.chapters.filter((chapter) =>
+                          completedChapters.has(chapter)
+                        ).length,
+                      0
+                    ) /
+                      modules.reduce(
+                        (acc, module) => acc + module.chapters.length,
+                        0
+                      )) *
+                      100
+                  )}
+                  % Complete
                 </p>
               </div>
             </div>
-            
+
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)]">
-              <h3 className="font-bold text-xl text-gray-800 mb-2">Tokens Earned</h3>
+              <h3 className="font-bold text-xl text-gray-800 mb-2">
+                Tokens Earned
+              </h3>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <span className="text-yellow-600 font-bold">🪙</span>
                 </div>
-                <span className="text-2xl font-bold text-gray-800">{totalTokens}</span>
+                <span className="text-2xl font-bold text-gray-800">
+                  {totalTokens}
+                </span>
                 <span className="text-gray-600">tokens</span>
               </div>
             </div>
@@ -1668,13 +1686,22 @@ const LearnPage = () => {
         <button
           onClick={() => {
             logout();
-            window.location.href = '/';
+            window.location.href = "/";
           }}
           className="w-full px-6 py-4 bg-[#E86A33] text-white rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] hover:bg-[#d55a23] transition-all duration-200 flex items-center justify-center space-x-3 mt-auto font-bold text-lg"
         >
           <span>Logout</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v3a1 1 0 102 0V9z" clipRule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v3a1 1 0 102 0V9z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -1767,7 +1794,7 @@ const LearnPage = () => {
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-300 via-pink-300 to-red-300"></div>
             <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-300 via-blue-300 to-indigo-300"></div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-4">
@@ -1783,36 +1810,80 @@ const LearnPage = () => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-green-200 via-emerald-200 to-teal-200 blur-md"></div>
                   <div className="relative w-full bg-white/50 backdrop-blur-sm rounded-full h-6 overflow-hidden border-2 border-gray-800">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 h-full transition-all duration-500 relative"
-                      style={{ 
-                        width: `${(modules.reduce((acc, module) => 
-                          acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                        ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100}%` 
+                      style={{
+                        width: `${
+                          (modules.reduce(
+                            (acc, module) =>
+                              acc +
+                              module.chapters.filter((chapter) =>
+                                completedChapters.has(chapter)
+                              ).length,
+                            0
+                          ) /
+                            modules.reduce(
+                              (acc, module) => acc + module.chapters.length,
+                              0
+                            )) *
+                          100
+                        }%`,
                       }}
                     >
                       <div className="absolute inset-0 overflow-hidden opacity-75">
                         <div className="animate-[move-right-to-left_2s_linear_infinite] flex">
                           {[...Array(10)].map((_, i) => (
-                            <div key={i} className="h-6 w-3 bg-white/20 -skew-x-[40deg] mx-2" />
+                            <div
+                              key={i}
+                              className="h-6 w-3 bg-white/20 -skew-x-[40deg] mx-2"
+                            />
                           ))}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div 
+                  <div
                     className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-500"
-                    style={{ 
-                      left: `${Math.min(Math.max((modules.reduce((acc, module) => 
-                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                      ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100, 0), 96)}%` 
+                    style={{
+                      left: `${Math.min(
+                        Math.max(
+                          (modules.reduce(
+                            (acc, module) =>
+                              acc +
+                              module.chapters.filter((chapter) =>
+                                completedChapters.has(chapter)
+                              ).length,
+                            0
+                          ) /
+                            modules.reduce(
+                              (acc, module) => acc + module.chapters.length,
+                              0
+                            )) *
+                            100,
+                          0
+                        ),
+                        96
+                      )}%`,
                     }}
                   >
                     <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800 shadow-lg transform -translate-x-1/2">
                       <span className="text-sm font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
-                        {Math.round((modules.reduce((acc, module) => 
-                          acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                        ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100)}%
+                        {Math.round(
+                          (modules.reduce(
+                            (acc, module) =>
+                              acc +
+                              module.chapters.filter((chapter) =>
+                                completedChapters.has(chapter)
+                              ).length,
+                            0
+                          ) /
+                            modules.reduce(
+                              (acc, module) => acc + module.chapters.length,
+                              0
+                            )) *
+                            100
+                        )}
+                        %
                       </span>
                     </div>
                   </div>
@@ -1823,18 +1894,30 @@ const LearnPage = () => {
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mr-2"></div>
                     <span className="text-sm font-medium">Completed:</span>
                     <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
-                      {modules.reduce((acc, module) => 
-                        acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                      )} chapters
+                      {modules.reduce(
+                        (acc, module) =>
+                          acc +
+                          module.chapters.filter((chapter) =>
+                            completedChapters.has(chapter)
+                          ).length,
+                        0
+                      )}{" "}
+                      chapters
                     </span>
                   </div>
                   <div className="flex items-center bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-gray-800">
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mr-2"></div>
                     <span className="text-sm font-medium">Remaining:</span>
                     <span className="ml-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
-                      {modules.reduce((acc, module) => 
-                        acc + module.chapters.filter(chapter => !completedChapters.has(chapter)).length, 0
-                      )} chapters
+                      {modules.reduce(
+                        (acc, module) =>
+                          acc +
+                          module.chapters.filter(
+                            (chapter) => !completedChapters.has(chapter)
+                          ).length,
+                        0
+                      )}{" "}
+                      chapters
                     </span>
                   </div>
                 </div>
@@ -1842,10 +1925,26 @@ const LearnPage = () => {
 
               {/* Avatar Section */}
               <div className="ml-8">
-                <img 
-                  src={`/images/${Math.min(Math.floor((modules.reduce((acc, module) => 
-                    acc + module.chapters.filter(chapter => completedChapters.has(chapter)).length, 0
-                  ) / modules.reduce((acc, module) => acc + module.chapters.length, 0)) * 100 / 20) + 1, 5)}.png`}
+                <img
+                  src={`/images/${Math.min(
+                    Math.floor(
+                      ((modules.reduce(
+                        (acc, module) =>
+                          acc +
+                          module.chapters.filter((chapter) =>
+                            completedChapters.has(chapter)
+                          ).length,
+                        0
+                      ) /
+                        modules.reduce(
+                          (acc, module) => acc + module.chapters.length,
+                          0
+                        )) *
+                        100) /
+                        20
+                    ) + 1,
+                    5
+                  )}.png`}
                   alt="Progress Avatar"
                   className="w-[200px] h-[200px] object-cover rounded-full border-4 border-gray-800 shadow-lg"
                 />
@@ -1877,12 +1976,19 @@ const LearnPage = () => {
                   <div className="flex items-center">
                     <Star className="w-5 h-5 text-yellow-500" />
                     <span className="ml-1 font-bold">
-                      {module.chapters.filter(chapter => isChapterCompleted(chapter)).length} / {module.chapters.length}
+                      {
+                        module.chapters.filter((chapter) =>
+                          isChapterCompleted(chapter)
+                        ).length
+                      }{" "}
+                      / {module.chapters.length}
                     </span>
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4">{module.description}</p>
-                <div className="text-sm text-gray-500 mb-4">{module.duration}</div>
+                <div className="text-sm text-gray-500 mb-4">
+                  {module.duration}
+                </div>
                 <div className="space-y-2">
                   {module.chapters.map((chapter, index) => (
                     <button
@@ -1914,8 +2020,10 @@ const LearnPage = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-black">{selectedChapter}</h2>
-                <button 
+                <h2 className="text-3xl font-bold text-black">
+                  {selectedChapter}
+                </h2>
+                <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => {
                     setShowChapterContent(false);
@@ -1935,24 +2043,36 @@ const LearnPage = () => {
                     <>
                       {/* Introduction */}
                       <div className="bg-orange-50 p-4 rounded-lg">
-                        <p className="text-lg text-gray-700">{chapterContent[selectedChapter].introduction}</p>
+                        <p className="text-lg text-gray-700">
+                          {chapterContent[selectedChapter].introduction}
+                        </p>
                       </div>
 
                       {/* Sections */}
-                      {chapterContent[selectedChapter].sections.map((section, index) => (
-                        <div key={index} className="border-b pb-6">
-                          <h3 className="text-xl font-semibold mb-4 text-black">{section.title}</h3>
-                          <p className="text-gray-700 mb-4">{section.content}</p>
-                          <div className="bg-orange-50 p-4 rounded-lg">
-                            <h4 className="font-semibold mb-2 text-black">Key Points:</h4>
-                            <ul className="list-disc pl-5 space-y-2">
-                              {section.keyPoints.map((point, i) => (
-                                <li key={i} className="text-gray-700">{point}</li>
-                              ))}
-                            </ul>
+                      {chapterContent[selectedChapter].sections.map(
+                        (section, index) => (
+                          <div key={index} className="border-b pb-6">
+                            <h3 className="text-xl font-semibold mb-4 text-black">
+                              {section.title}
+                            </h3>
+                            <p className="text-gray-700 mb-4">
+                              {section.content}
+                            </p>
+                            <div className="bg-orange-50 p-4 rounded-lg">
+                              <h4 className="font-semibold mb-2 text-black">
+                                Key Points:
+                              </h4>
+                              <ul className="list-disc pl-5 space-y-2">
+                                {section.keyPoints.map((point, i) => (
+                                  <li key={i} className="text-gray-700">
+                                    {point}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      )}
 
                       {/* Start Quiz Button */}
                       <div className="flex justify-center pt-4">
@@ -1970,11 +2090,17 @@ const LearnPage = () => {
                       {/* Quiz Header */}
                       <div className="bg-orange-50 p-6 rounded-lg">
                         <div className="flex justify-between items-center mb-6">
-                          <h3 className="text-xl font-semibold text-black">Knowledge Check</h3>
+                          <h3 className="text-xl font-semibold text-black">
+                            Knowledge Check
+                          </h3>
                           <button
                             className="text-orange-600 hover:text-orange-800 text-sm flex items-center space-x-2"
                             onClick={() => {
-                              if (window.confirm('Going back will reset your quiz progress. Are you sure?')) {
+                              if (
+                                window.confirm(
+                                  "Going back will reset your quiz progress. Are you sure?"
+                                )
+                              ) {
                                 setShowQuiz(false);
                                 setQuizAnswers({});
                                 setSubmittedAnswers({});
@@ -1987,80 +2113,129 @@ const LearnPage = () => {
                         </div>
 
                         {/* Quiz Questions */}
-                        {chapterContent[selectedChapter].quiz.map((quizItem, questionIndex) => (
-                          <div key={questionIndex} className="space-y-4 mb-8">
-                            <div className="flex justify-between items-center">
-                              <p className="font-medium text-black">{quizItem.question}</p>
-                              {quizAttempts[questionIndex] > 0 && (
-                                <span className="text-sm text-gray-500">
-                                  Attempts: {quizAttempts[questionIndex]}
-                                </span>
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              {quizItem.options.map((option, optionIndex) => (
-                                <button
-                                  key={optionIndex}
-                                  className={getAnswerButtonClass(questionIndex, optionIndex, quizItem.correct)}
-                                  onClick={() => !submittedAnswers[questionIndex] && handleAnswerSelect(questionIndex, optionIndex)}
-                                  disabled={submittedAnswers[questionIndex]}
-                                >
-                                  {option}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="mt-4">
-                              {!submittedAnswers[questionIndex] ? (
-                                <button
-                                  className={`px-4 py-2 rounded-lg ${
-                                    quizAnswers[questionIndex] !== undefined
-                                      ? 'bg-black text-white hover:bg-gray-800'
-                                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  }`}
-                                  onClick={() => quizAnswers[questionIndex] !== undefined && handleQuizSubmit(questionIndex)}
-                                  disabled={quizAnswers[questionIndex] === undefined}
-                                >
-                                  {quizAttempts[questionIndex] ? 'Try Again' : 'Submit Answer'}
-                                </button>
-                              ) : (
-                                <div className="text-sm">
-                                  {quizAnswers[questionIndex] === quizItem.correct ? (
-                                    <p className="text-orange-600">✓ Correct! Well done!</p>
-                                  ) : (
-                                    <div>
-                                      <p className="text-red-600 font-medium">✗ Incorrect.</p>
-                                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-2">
-                                        <p className="text-orange-800">Take a moment to:</p>
-                                        <ul className="list-disc pl-5 mt-2 space-y-1 text-orange-700">
-                                          <li>Review the chapter material carefully</li>
-                                          <li>Focus on the key points related to this question</li>
-                                          <li>Think about the concepts discussed</li>
-                                        </ul>
+                        {chapterContent[selectedChapter].quiz.map(
+                          (quizItem, questionIndex) => (
+                            <div key={questionIndex} className="space-y-4 mb-8">
+                              <div className="flex justify-between items-center">
+                                <p className="font-medium text-black">
+                                  {quizItem.question}
+                                </p>
+                                {quizAttempts[questionIndex] > 0 && (
+                                  <span className="text-sm text-gray-500">
+                                    Attempts: {quizAttempts[questionIndex]}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                {quizItem.options.map((option, optionIndex) => (
+                                  <button
+                                    key={optionIndex}
+                                    className={getAnswerButtonClass(
+                                      questionIndex,
+                                      optionIndex,
+                                      quizItem.correct
+                                    )}
+                                    onClick={() =>
+                                      !submittedAnswers[questionIndex] &&
+                                      handleAnswerSelect(
+                                        questionIndex,
+                                        optionIndex
+                                      )
+                                    }
+                                    disabled={submittedAnswers[questionIndex]}
+                                  >
+                                    {option}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="mt-4">
+                                {!submittedAnswers[questionIndex] ? (
+                                  <button
+                                    className={`px-4 py-2 rounded-lg ${
+                                      quizAnswers[questionIndex] !== undefined
+                                        ? "bg-black text-white hover:bg-gray-800"
+                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    }`}
+                                    onClick={() =>
+                                      quizAnswers[questionIndex] !==
+                                        undefined &&
+                                      handleQuizSubmit(questionIndex)
+                                    }
+                                    disabled={
+                                      quizAnswers[questionIndex] === undefined
+                                    }
+                                  >
+                                    {quizAttempts[questionIndex]
+                                      ? "Try Again"
+                                      : "Submit Answer"}
+                                  </button>
+                                ) : (
+                                  <div className="text-sm">
+                                    {quizAnswers[questionIndex] ===
+                                    quizItem.correct ? (
+                                      <p className="text-orange-600">
+                                        ✓ Correct! Well done!
+                                      </p>
+                                    ) : (
+                                      <div>
+                                        <p className="text-red-600 font-medium">
+                                          ✗ Incorrect.
+                                        </p>
+                                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-2">
+                                          <p className="text-orange-800">
+                                            Take a moment to:
+                                          </p>
+                                          <ul className="list-disc pl-5 mt-2 space-y-1 text-orange-700">
+                                            <li>
+                                              Review the chapter material
+                                              carefully
+                                            </li>
+                                            <li>
+                                              Focus on the key points related to
+                                              this question
+                                            </li>
+                                            <li>
+                                              Think about the concepts discussed
+                                            </li>
+                                          </ul>
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        )}
 
                         {/* Complete Chapter Button */}
                         <div className="flex justify-end mt-8">
                           <button
                             className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
                             onClick={() => {
-                              const allQuestionsAnswered = chapterContent[selectedChapter].quiz.every(
-                                (quiz, index) => submittedAnswers[index] && quizAnswers[index] === quiz.correct
+                              const allQuestionsAnswered = chapterContent[
+                                selectedChapter
+                              ].quiz.every(
+                                (quiz, index) =>
+                                  submittedAnswers[index] &&
+                                  quizAnswers[index] === quiz.correct
                               );
-                              
+
                               if (allQuestionsAnswered) {
-                                const totalAttempts = Object.values(quizAttempts).reduce((a, b) => a + b, 0);
-                                const questionsCount = chapterContent[selectedChapter].quiz.length;
+                                const totalAttempts = Object.values(
+                                  quizAttempts
+                                ).reduce((a, b) => a + b, 0);
+                                const questionsCount =
+                                  chapterContent[selectedChapter].quiz.length;
                                 // Calculate tokens based on attempts (fewer attempts = more tokens)
                                 const baseTokens = 50;
-                                const tokenMultiplier = Math.max(0.5, 1 - ((totalAttempts - questionsCount) * 0.1));
-                                const earnedTokens = Math.round(baseTokens * tokenMultiplier);
+                                const tokenMultiplier = Math.max(
+                                  0.5,
+                                  1 - (totalAttempts - questionsCount) * 0.1
+                                );
+                                const earnedTokens = Math.round(
+                                  baseTokens * tokenMultiplier
+                                );
 
                                 handleChapterComplete(
                                   selectedChapter,
@@ -2074,7 +2249,9 @@ const LearnPage = () => {
                                 setSubmittedAnswers({});
                                 setQuizAttempts({});
                               } else {
-                                alert('Please answer all questions correctly before completing the chapter.');
+                                toast.warning(
+                                  "Please answer all questions correctly before completing the chapter."
+                                );
                               }
                             }}
                           >
@@ -2093,7 +2270,7 @@ const LearnPage = () => {
         {/* Milestone Popup */}
         <AnimatePresence>
           {showMilestone && (
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
               onClick={() => setShowMilestone(false)}
             >
@@ -2102,7 +2279,7 @@ const LearnPage = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.5, opacity: 0 }}
                 className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 relative"
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <button
                   className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -2110,7 +2287,7 @@ const LearnPage = () => {
                 >
                   ✕
                 </button>
-                
+
                 <div className="flex flex-col items-center">
                   <motion.img
                     initial={{ scale: 0 }}
@@ -2120,7 +2297,7 @@ const LearnPage = () => {
                     alt={`Milestone ${currentMilestone / 20 + 1}`}
                     className="w-64 h-64 object-contain mb-6"
                   />
-                  
+
                   <motion.h2
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -2129,7 +2306,7 @@ const LearnPage = () => {
                   >
                     Congratulations! 🎉
                   </motion.h2>
-                  
+
                   <motion.p
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -2138,7 +2315,7 @@ const LearnPage = () => {
                   >
                     You've reached {currentMilestone}% of your learning journey!
                   </motion.p>
-                  
+
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -2146,7 +2323,8 @@ const LearnPage = () => {
                     className="bg-orange-50 p-4 rounded-lg text-center"
                   >
                     <p className="text-orange-800 font-medium">
-                      Keep up the great work! Your dedication to learning is impressive.
+                      Keep up the great work! Your dedication to learning is
+                      impressive.
                     </p>
                   </motion.div>
                 </div>
@@ -2165,18 +2343,18 @@ const LearnPage = () => {
 // Add this helper function to get achievement progress
 const getAchievementProgress = (achievementId) => {
   switch (achievementId) {
-    case 'FIRST_LESSON':
-      return 'Complete your first lesson';
-    case 'PERFECT_QUIZ':
-      return 'Get 100% on any quiz';
-    case 'TOKEN_MASTER':
-      return 'Earn 1000 tokens';
-    case 'WEEK_STREAK':
-      return 'Maintain a 7-day streak';
-    case 'INVESTMENT_START':
-      return 'Make your first investment';
+    case "FIRST_LESSON":
+      return "Complete your first lesson";
+    case "PERFECT_QUIZ":
+      return "Get 100% on any quiz";
+    case "TOKEN_MASTER":
+      return "Earn 1000 tokens";
+    case "WEEK_STREAK":
+      return "Maintain a 7-day streak";
+    case "INVESTMENT_START":
+      return "Make your first investment";
     default:
-      return 'Keep learning to unlock';
+      return "Keep learning to unlock";
   }
 };
 

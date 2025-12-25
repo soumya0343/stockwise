@@ -67,17 +67,13 @@ router.get('/progress', auth, async (req, res) => {
 router.post('/progress', auth, async (req, res) => {
   try {
     const { completedChapters, chapterProgress, totalTokens } = req.body;
-    console.log('Received progress update:', { completedChapters, chapterProgress, totalTokens });
 
     const user = await User.findById(req.user.userId);
     if (!user) {
-      console.log('User not found:', req.user.userId);
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Initialize stats if they don't exist
     if (!user.stats) {
-      console.log('Initializing user stats');
       user.stats = {
         xp: 0,
         level: 1,
@@ -87,15 +83,11 @@ router.post('/progress', auth, async (req, res) => {
       };
     }
 
-    // Update completed lessons
     if (completedChapters && Array.isArray(completedChapters)) {
-      console.log('Updating completed lessons:', completedChapters);
-      // Create a map of existing lessons for quick lookup
       const existingLessonsMap = new Map(
         user.stats.completedLessons.map(lesson => [lesson.lessonId, lesson])
       );
 
-      // Update or add new lessons
       completedChapters.forEach(chapterId => {
         if (!existingLessonsMap.has(chapterId)) {
           user.stats.completedLessons.push({
@@ -107,18 +99,12 @@ router.post('/progress', auth, async (req, res) => {
       });
     }
 
-    // Update tokens if provided
     if (typeof totalTokens === 'number') {
-      console.log('Updating tokens:', totalTokens);
       user.stats.tokens = totalTokens;
     }
 
-    // Save the updated user document
-    console.log('Saving user document');
     const savedUser = await user.save();
-    console.log('User document saved successfully');
 
-    // Send back the updated stats
     const response = {
       completedChapters: savedUser.stats.completedLessons.map(lesson => lesson.lessonId),
       chapterProgress: savedUser.stats.completedLessons.reduce((acc, lesson) => {
@@ -127,7 +113,6 @@ router.post('/progress', auth, async (req, res) => {
       }, {}),
       totalTokens: savedUser.stats.tokens
     };
-    console.log('Sending response:', response);
     res.json(response);
   } catch (error) {
     console.error('Error updating progress:', error);

@@ -1,6 +1,7 @@
-import React from 'react';
-import { ArrowLeft, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const IndexInvestPage = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const IndexInvestPage = () => {
       returns: "12.5% (3Y)",
       expense: "0.10%",
       minInvestment: "₹500",
-      fundHouse: "SBI Mutual Fund"
+      fundHouse: "SBI Mutual Fund",
     },
     {
       id: 2,
@@ -22,7 +23,7 @@ const IndexInvestPage = () => {
       returns: "11.8% (3Y)",
       expense: "0.12%",
       minInvestment: "₹500",
-      fundHouse: "HDFC Mutual Fund"
+      fundHouse: "HDFC Mutual Fund",
     },
     {
       id: 3,
@@ -31,7 +32,7 @@ const IndexInvestPage = () => {
       returns: "13.2% (3Y)",
       expense: "0.15%",
       minInvestment: "₹1000",
-      fundHouse: "UTI Mutual Fund"
+      fundHouse: "UTI Mutual Fund",
     },
     {
       id: 4,
@@ -40,8 +41,8 @@ const IndexInvestPage = () => {
       returns: "14.5% (3Y)",
       expense: "0.20%",
       minInvestment: "₹1000",
-      fundHouse: "ICICI Prudential"
-    }
+      fundHouse: "ICICI Prudential",
+    },
   ];
 
   return (
@@ -49,7 +50,7 @@ const IndexInvestPage = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center space-x-6 mb-12">
           <button
-            onClick={() => navigate('/invest')}
+            onClick={() => navigate("/invest")}
             className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -60,7 +61,7 @@ const IndexInvestPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {indexOptions.map((option) => (
-            <div 
+            <div
               key={option.id}
               className="bg-white p-6 rounded-xl border-4 border-gray-800 shadow-[4px_4px_0px_rgba(31,41,55,0.8)] hover:shadow-[8px_8px_0px_rgba(31,41,55,0.8)] transition-all duration-200"
             >
@@ -70,13 +71,15 @@ const IndexInvestPage = () => {
                   {option.fundHouse}
                 </span>
               </div>
-              
+
               <p className="text-gray-600 mb-4">{option.description}</p>
-              
+
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Returns:</span>
-                  <span className="font-bold text-green-600">{option.returns}</span>
+                  <span className="font-bold text-green-600">
+                    {option.returns}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Expense Ratio:</span>
@@ -87,9 +90,13 @@ const IndexInvestPage = () => {
                   <span className="font-bold">{option.minInvestment}</span>
                 </div>
               </div>
-              
+
               <button
-                onClick={() => alert('This would connect to a payment gateway in production!')}
+                onClick={() =>
+                  toast.info(
+                    "This would connect to a payment gateway in production!"
+                  )
+                }
                 className="w-full py-3 px-4 bg-black text-white rounded-lg font-bold hover:bg-gray-800 transition-all duration-200"
               >
                 Invest Now
@@ -102,4 +109,4 @@ const IndexInvestPage = () => {
   );
 };
 
-export default IndexInvestPage; 
+export default IndexInvestPage;

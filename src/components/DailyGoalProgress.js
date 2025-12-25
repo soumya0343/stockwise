@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGamification } from '../contexts/GamificationContext';
+import { useGamification } from '../context/GamificationContext';
 import { Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 

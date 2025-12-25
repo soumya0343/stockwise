@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, X } from 'lucide-react';
 
 const FinanceChatbot = () => {
@@ -18,10 +18,8 @@ const FinanceChatbot = () => {
   const apiKeyRef = useRef(process.env.REACT_APP_GEMINI_API_KEY || '');
 
   useEffect(() => {
-    // Check if API key is configured
     setIsApiConfigured(!!apiKeyRef.current);
     
-    // If API is not configured, add a warning message
     if (!apiKeyRef.current) {
       setMessages(prev => [
         ...prev,
@@ -41,11 +39,8 @@ const FinanceChatbot = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Enhanced mock response function
   const generateMockResponse = (query) => {
     const queryLower = query.toLowerCase();
-    
-    // More comprehensive keyword matching
     if (queryLower.includes('invest') || queryLower.includes('stock') || queryLower.includes('market')) {
       return "When investing, it's important to:\n\n1. Diversify your portfolio\n2. Start with index funds for beginners\n3. Understand your risk tolerance\n4. Have a long-term perspective\n5. Regular monitoring and rebalancing";
     } else if (queryLower.includes('budget') || queryLower.includes('save') || queryLower.includes('spending')) {
@@ -63,26 +58,23 @@ const FinanceChatbot = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message
     const userInput = input;
     setMessages(prev => [...prev, { type: 'user', content: userInput }]);
     setInput('');
     setIsLoading(true);
 
-    // If API is not configured, use mock response
     if (!isApiConfigured) {
       setTimeout(() => {
         const mockResponse = generateMockResponse(userInput);
         setMessages(prev => [...prev, { type: 'bot', content: mockResponse }]);
         setIsLoading(false);
-      }, 1000); // Add a small delay to make it feel more natural
+      }, 1000);
       return;
     }
 
     try {
-      // Use AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10 seconds
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyRef.current}`,
@@ -129,7 +121,6 @@ Remember to:
 
       const result = await response.json();
       
-      // Extract response with better error handling
       let botResponse = '';
       
       try {
@@ -151,7 +142,6 @@ Remember to:
     } catch (error) {
       console.error('Chatbot error:', error);
       
-      // Different error messages based on error type
       let errorMessage;
       if (error.name === 'AbortError') {
         errorMessage = "I'm taking too long to respond. Let me try a simpler answer.";
@@ -166,7 +156,6 @@ Remember to:
         content: errorMessage
       }]);
       
-      // Add fallback response after error message
       setTimeout(() => {
         const fallbackResponse = generateMockResponse(userInput);
         setMessages(prev => [...prev, { 
@@ -257,7 +246,7 @@ Remember to:
                 placeholder="Ask about finance..."
                 className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-orange-600"
                 disabled={isLoading}
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
               />
               <button
                 type="submit"

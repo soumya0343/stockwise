@@ -16,6 +16,7 @@ A comprehensive investment learning platform with gamification features. Learn a
 ## Tech Stack
 
 ### Frontend
+
 - **React.js** - UI framework
 - **React Router** - Client-side routing
 - **Tailwind CSS** - Utility-first CSS framework
@@ -25,6 +26,7 @@ A comprehensive investment learning platform with gamification features. Learn a
 - **Axios** - HTTP client
 
 ### Backend
+
 - **Node.js** - Runtime environment
 - **Express.js** - Web framework
 - **MongoDB** - Database
@@ -35,6 +37,7 @@ A comprehensive investment learning platform with gamification features. Learn a
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - Node.js (v14 or higher)
 - npm or yarn
 - MongoDB (local installation or MongoDB Atlas account)
@@ -94,6 +97,7 @@ sudo systemctl start mongod
 You have two options:
 
 **Option 1: Run both frontend and backend together (Recommended)**
+
 ```bash
 npm run dev
 ```
@@ -101,11 +105,13 @@ npm run dev
 **Option 2: Run them separately**
 
 Terminal 1 - Backend Server:
+
 ```bash
 npm run server
 ```
 
 Terminal 2 - Frontend:
+
 ```bash
 npm start
 ```
@@ -115,7 +121,7 @@ npm start
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend API**: [http://localhost:5001](http://localhost:5001)
 - **Live Demo**: [https://stockwise-mu.vercel.app/](https://stockwise-mu.vercel.app/)
-  
+
 ## Project Structure
 
 ```
@@ -139,17 +145,20 @@ stockwise/
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Register a new user
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/verify` - Verify JWT token
 - `GET /api/auth/me` - Get current user (protected)
 
 ### User
+
 - `GET /api/user/profile` - Get user profile (protected)
 - `PUT /api/user/profile` - Update user profile (protected)
 - `PUT /api/user/stats` - Update user stats (protected)
 
 ### Progress
+
 - `GET /api/progress` - Get user progress (protected)
 - `PUT /api/progress` - Update user progress (protected)
 
@@ -164,6 +173,7 @@ stockwise/
 ## Key Features & Recent Fixes
 
 ### Authentication Flow
+
 - ✅ Secure password hashing with bcryptjs
 - ✅ JWT token-based authentication
 - ✅ Automatic token storage in localStorage
@@ -171,6 +181,7 @@ stockwise/
 - ✅ Seamless onboarding flow after registration
 
 ### Recent Improvements
+
 - **Fixed Registration Flow**: Users now continue the onboarding process after registration instead of being redirected to login
 - **Fixed Login Error**: Resolved bcrypt password comparison issue by explicitly selecting password field in queries
 - **Improved Error Handling**: Better error messages for network errors and authentication failures
@@ -179,18 +190,23 @@ stockwise/
 ## Troubleshooting
 
 ### Backend Server Not Running
+
 If you see "Network Error" when trying to register or login:
+
 1. Make sure the backend server is running on port 5001
 2. Check that MongoDB is running and accessible
 3. Verify your `.env` file has the correct MongoDB connection string
 
 ### MongoDB Connection Issues
+
 - Ensure MongoDB is installed and running
 - Check the connection string in your `.env` file
 - For MongoDB Atlas, verify your IP is whitelisted and credentials are correct
 
 ### Port Already in Use
+
 If port 3000 or 5001 is already in use:
+
 - Change the port in `package.json` (frontend) or `.env` (backend)
 - Or stop the process using the port
 
@@ -212,7 +228,6 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
 
 ## License
 

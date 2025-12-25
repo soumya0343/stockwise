@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Coffee, Pizza, ShoppingCart, Gift, Ticket, Watch, Clock, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const StorePage = () => {
   const navigate = useNavigate();
@@ -105,9 +106,9 @@ const StorePage = () => {
       setRedeemedRewards(updatedRedeemedRewards);
       localStorage.setItem('redeemedRewards', JSON.stringify(updatedRedeemedRewards));
 
-      alert(`Successfully redeemed ${reward.name}!`);
+      toast.success(`Successfully redeemed ${reward.name}!`);
     } else {
-      alert('Not enough tokens! Complete more chapters to earn tokens.');
+      toast.error('Not enough tokens! Complete more chapters to earn tokens.');
     }
   };
 
